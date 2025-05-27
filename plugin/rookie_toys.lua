@@ -32,6 +32,9 @@ end, {})
 vim.api.nvim_create_user_command("RookieToysGitOpenGraphLocal", function()
     git.open_git_graph_local()
 end, {})
+vim.api.nvim_create_user_command("RookieToysGitDiff", function()
+    git.diff()
+end, {})
 
 -- Search
 vim.api.nvim_create_user_command("RookieToysSearchCurrentWord", function()

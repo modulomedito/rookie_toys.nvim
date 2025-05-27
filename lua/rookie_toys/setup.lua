@@ -43,10 +43,11 @@ local function setup_keymap()
     -- Plugin related
     vim.keymap.set('n', '<C-y>', ':NERDTreeToggle<CR>', nsopt)
     vim.keymap.set('n', '<F10>', ':copen <bar> AsyncRun cargo ', nopt)
-    vim.keymap.set('n', '<leader>gf', ':RookieToysSearchLiveGrep<CR>', nsopt)
-    vim.keymap.set('n', '<leader>gg', ':RookieToysSearchCurrentWord<CR>', nopt)
-    vim.api.nvim_create_user_command("GG", "RookieToysGitOpenGraph", {})
-    vim.api.nvim_create_user_command("GGL", "RookieToysGitOpenGraphLocal", {})
+    vim.keymap.set('n', '<leader>gf', ':lua require("rookie_toys.search").live_grep()<CR>', nsopt)
+    vim.keymap.set('n', '<leader>gg', ':lua require("rookie_toys.search").grep_word_under_cursor()<CR>', nsopt)
+    vim.api.nvim_create_user_command("GD", function(_) require("rookie_toys.git").diff() end, {})
+    vim.api.nvim_create_user_command("GG", function(_) require("rookie_toys.git").open_git_graph_all() end, {})
+    vim.api.nvim_create_user_command("GGL", function(_) require("rookie_toys.git").open_git_graph_local() end, {})
     vim.api.nvim_create_user_command("CC", function(_) require("rookie_clangd").api.generate_compile_commands() end, {})
     vim.api.nvim_create_user_command("CA", function(_) require("rookie_clangd").api.add_define_symbol() end, {})
     vim.api.nvim_create_user_command("CX", function(_) require("rookie_clangd").api.remove_define_symbol() end, {})
@@ -156,6 +157,11 @@ local function setup_lsp()
         root_markers = { '.luarc.json', '.luarc.jsonc' },
         filetypes = { 'lua' }
     })
+    vim.lsp.config('markdown', {
+        cmd = { 'marksman' },
+        root_markers = { '.git' },
+        filetypes = { 'markdown' }
+    })
     vim.lsp.config("taplo", {
         cmd = { 'taplo', 'lsp', 'stdio' },
         root_markers = { '.git', 'Cargo.toml' },
@@ -166,7 +172,7 @@ local function setup_lsp()
         root_markers = { '.clangd', 'compile_commands.json' },
         filetypes = { 'c', 'cpp' },
     })
-    vim.lsp.enable({ "clangd", "luals", "taplo", "rust-analyzer" })
+    vim.lsp.enable({ "clangd", "luals", "markdown", "taplo", "rust-analyzer" })
     vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("LspConfig", { clear = true }),
         callback = function(ev)
@@ -204,7 +210,7 @@ local function setup()
     setup_keymap()
     setup_option()
     -- setup_vimplug()
-    -- setup_lsp()
+    setup_lsp()
 end
 
 return {
