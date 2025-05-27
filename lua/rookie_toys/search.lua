@@ -32,7 +32,7 @@ local function grep_word_under_cursor()
 
     vim.cmd("silent! grep <C-R><C-W> .")
     vim.cmd("copen")
-    vim.cmd("redraw")
+    vim.cmd("redraw!")
 end
 
 
