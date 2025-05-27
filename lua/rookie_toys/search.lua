@@ -16,23 +16,25 @@ local function check_rg()
     return 1
 end
 
+local function do_grep_word(word)
+    vim.cmd("silent! grep " .. word .. " .")
+    vim.cmd("copen")
+    vim.cmd("redraw!")
+end
 
 local function live_grep()
     if check_rg() == 0 then return end
 
     local user_input = vim.fn.input("Enter your searching pattern: ")
     print("Searching: " .. user_input)
-    vim.cmd("silent! grep " .. user_input .. " .")
-    vim.cmd("copen")
-    vim.cmd("redraw!")
+    do_grep_word(user_input)
 end
 
 local function grep_word_under_cursor()
     if check_rg() == 0 then return end
 
-    vim.cmd("silent! grep <C-R><C-W> .")
-    vim.cmd("copen")
-    vim.cmd("redraw!")
+    local word = vim.fn.expand("<cword>")
+    do_grep_word(word)
 end
 
 
