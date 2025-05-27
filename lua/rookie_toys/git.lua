@@ -1,7 +1,7 @@
-local function output_stdout_to_buffer(cmd)
+local function output_stdout_to_quickfix(cmd)
     local output = vim.fn.systemlist(cmd)
-    vim.cmd("new")
-    vim.api.nvim_buf_set_lines(0, 0, -1, false, output)
+    vim.fn.setqflist({}, 'r', { lines = output })
+    vim.cmd("copen")
 end
 
 local function open_git_graph_local()
@@ -9,7 +9,7 @@ local function open_git_graph_local()
     local decorate = '--pretty=format:"%h [%ad] {%an} |%d %s" --date=format-local:"%y-%m-%d %H:%M"'
     cmd = cmd .. decorate
     -- vim.cmd(cmd)
-    output_stdout_to_buffer(cmd)
+    output_stdout_to_quickfix(cmd)
 end
 
 local function open_git_graph_all()
@@ -18,7 +18,7 @@ local function open_git_graph_all()
     cmd = cmd .. decorate
 
     -- vim.cmd(cmd)
-    output_stdout_to_buffer(cmd)
+    output_stdout_to_quickfix(cmd)
 end
 
 return {
