@@ -44,5 +44,5 @@ end, {})
 
 -- Setup
 vim.api.nvim_create_user_command("RookieToysSetup", function()
-    setup.search()
+    setup.setup()
 end, {})
