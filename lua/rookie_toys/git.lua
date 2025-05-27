@@ -1,14 +1,7 @@
 local function output_stdout_to_buffer(cmd)
-    vim.fn.jobstart(cmd, {
-        on_stdout = function(_, data)
-            if data then
-                vim.schedule(function()
-                    vim.cmd("new")
-                    vim.api.nvim_buf_set_lines(0, 0, -1, false, data)
-                end)
-            end
-        end,
-    })
+    local output = vim.fn.systemlist(cmd)
+    vim.cmd("new")
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, output)
 end
 
 local function open_git_graph_local()
