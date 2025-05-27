@@ -43,6 +43,9 @@ vim.api.nvim_create_user_command("RookieToysSearchLiveGrep", function()
 end, {})
 
 -- Setup
+vim.api.nvim_create_user_command("RookieToysSetupKeymap", function()
+    setup.setup_keymap()
+end, {})
 vim.api.nvim_create_user_command("RookieToysSetupOption", function()
     setup.setup_option()
 end, {})
