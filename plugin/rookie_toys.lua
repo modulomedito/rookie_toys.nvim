@@ -41,10 +41,3 @@ vim.api.nvim_create_user_command("RookieToysSearchLiveGrep", function()
     search.live_grep()
 end, {})
 
-local function setup()
-    require("rookie_toys.setup").setup()
-end
-
-return {
-    setup = setup,
-}
