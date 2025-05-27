@@ -1,6 +1,7 @@
 local c = require("rookie_toys.c")
 local git = require("rookie_toys.git")
 local search = require("rookie_toys.search")
+local setup = require("rookie_toys.setup")
 
 -- -- User commands
 -- local api = require("rookie_clangd.api")
@@ -39,4 +40,9 @@ vim.api.nvim_create_user_command("RookieToysSearchCurrentWord", function()
 end, {})
 vim.api.nvim_create_user_command("RookieToysSearchLiveGrep", function()
     search.live_grep()
+end, {})
+
+-- Setup
+vim.api.nvim_create_user_command("RookieToysSetup", function()
+    setup.search()
 end, {})

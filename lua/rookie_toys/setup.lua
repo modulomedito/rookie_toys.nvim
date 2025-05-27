@@ -1,0 +1,217 @@
+local function setup_misc()
+    vim.cmd("colorscheme habamax")
+    vim.cmd("language messages en_US")
+end
+
+local function setup_keymap()
+    local nopt = { noremap = true }
+    local nsopt = { noremap = true, silent = true }
+
+    vim.g.mapleader = " "
+    vim.keymap.set('n', '*', '*N', nsopt)
+    vim.keymap.set('n', '<C-d>', '<C-d>zz', nsopt)
+    vim.keymap.set('n', '<C-f>', '<C-u>zz', nsopt)
+    vim.keymap.set('n', '<C-p>', ':find *', nopt)
+    vim.keymap.set('n', '<C-q>', ':q<CR>', nsopt)
+    vim.keymap.set('n', '<C-s>', ":%s/\\s\\+$//e<bar>w<CR>", nsopt)
+    vim.keymap.set('n', '<F2>', ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>", nopt)
+    vim.keymap.set('n', '<M-j>', ':m .+1<CR>==', nsopt)
+    vim.keymap.set('n', '<M-k>', ':m .-2<CR>==', nsopt)
+    vim.keymap.set('n', '<leader>vim', ":vs $MYVIMRC<CR>", nsopt)
+    vim.keymap.set('n', 'H', 'g^', nsopt)
+    vim.keymap.set('n', 'K', 'i<CR><Esc>', nsopt)
+    vim.keymap.set('n', 'L', 'g_', nsopt)
+    vim.keymap.set('n', 'O', 'O <BS><Esc>', nsopt)
+    vim.keymap.set('n', 'gd', '<C-]>', nsopt)
+    vim.keymap.set('n', 'go', '"0yi):!start <C-r>0<CR>', nsopt)
+    vim.keymap.set('n', 'j', 'gj', nsopt)
+    vim.keymap.set('n', 'k', 'gk', nsopt)
+    vim.keymap.set('n', 'o', 'o <BS><Esc>', nsopt)
+    vim.keymap.set('v', '/', '"-y/<C-r>-<CR>N', nsopt)
+    vim.keymap.set('v', '<C-d>', '<C-d>zz', nsopt)
+    vim.keymap.set('v', '<C-f>', '<C-u>zz', nsopt)
+    vim.keymap.set('v', '<F2>', '"-y:%s/<C-r>-\\C/<C-r>-/g<Left><Left>', nopt)
+    vim.keymap.set('v', '<M-j>', ":m '>+1<CR>gv=gv", nsopt)
+    vim.keymap.set('v', '<M-k>', ":m '<-2<CR>gv=gv", nsopt)
+    vim.keymap.set('v', '<leader>ss', ":sort<CR>", nsopt)
+    vim.keymap.set('v', 'H', 'g^', nsopt)
+    vim.keymap.set('v', 'L', 'g_', nsopt)
+    vim.keymap.set('c', '<C-v>', '<C-r>*', nopt)
+    vim.keymap.set('o', 'H', 'g^', nsopt)
+    vim.keymap.set('o', 'L', 'g_', nsopt)
+
+    -- Plugin related
+    vim.keymap.set('n', '<C-y>', ':NERDTreeToggle<CR>', nsopt)
+    vim.keymap.set('n', '<F10>', ':copen <bar> AsyncRun cargo ', nopt)
+    vim.keymap.set('n', '<leader>gf', ':RookieToysSearchLiveGrep<CR>', nsopt)
+    vim.keymap.set('n', '<leader>gg', ':RookieToysSearchCurrentWord<CR>', nopt)
+    vim.api.nvim_create_user_command("GG", "RookieToysGitOpenGraph", {})
+    vim.api.nvim_create_user_command("GGL", "RookieToysGitOpenGraphLocal", {})
+    vim.api.nvim_create_user_command("CC", function(_) require("rookie_clangd").api.generate_compile_commands() end, {})
+    vim.api.nvim_create_user_command("CA", function(_) require("rookie_clangd").api.add_define_symbol() end, {})
+    vim.api.nvim_create_user_command("CX", function(_) require("rookie_clangd").api.remove_define_symbol() end, {})
+end
+
+local function setup_option()
+    vim.opt.autoindent     = true
+    vim.opt.autoread       = true
+    vim.opt.background     = "dark"
+    vim.opt.belloff        = "all"
+    vim.opt.breakindent    = true
+    vim.opt.clipboard      = "unnamed"
+    vim.opt.colorcolumn    = "81,101"
+    vim.opt.complete       = ".,w,b,u,t"
+    vim.opt.completeopt    = { "menuone", "longest", "preview" }
+    vim.opt.cursorcolumn   = true
+    vim.opt.cursorline     = true
+    vim.opt.expandtab      = true
+    vim.opt.foldenable     = false
+    vim.opt.grepformat     = "%f:%l:%c:%m,%f:%l:%m"
+    vim.opt.hlsearch       = true
+    vim.opt.ignorecase     = true
+    vim.opt.infercase      = true
+    vim.opt.iskeyword      = "@,48-57,_,192-255,-,#"
+    vim.opt.laststatus     = 2
+    vim.opt.list           = true
+    vim.opt.listchars      = { tab = "-->", trail = "~", nbsp = "␣" }
+    vim.opt.number         = true
+    vim.opt.pumheight      = 50
+    vim.opt.relativenumber = true
+    vim.opt.shiftwidth     = 4
+    vim.opt.shortmess      = "flnxtocTOCI"
+    vim.opt.signcolumn     = "yes"
+    vim.opt.smartcase      = true
+    vim.opt.smarttab       = true
+    vim.opt.softtabstop    = 4
+    vim.opt.statusline     = "%f:%l:%c %m%r%h%w%q%y [enc=%{&fileencoding}] [ff=%{&fileformat}]"
+    vim.opt.swapfile       = false
+    vim.opt.tabstop        = 4
+    vim.opt.termguicolors  = true
+    vim.opt.textwidth      = 100
+    vim.opt.undodir        = os.getenv("HOME") .. "/.vim/undo/"
+    vim.opt.undofile       = true
+    vim.opt.wildignorecase = true
+    vim.opt.wildoptions    = "pum"
+    vim.opt.wrap           = false
+    vim.opt.path:append("**")
+    vim.opt.shada:append("!")
+end
+
+local function setup_vimplug()
+    local cmd_first = ""
+    local env_path = ""
+    local loc_path = ""
+    local cmd_final = ""
+    local url = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+
+    if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
+        cmd_first = 'iwr -useb ' .. url
+        env_path = '$(@($env:XDG_DATA_HOME, $env:LOCALAPPDATA)[$null -eq $env:XDG_DATA_HOME])'
+        loc_path = env_path .. '/nvim-data/site/autoload/plug.vim'
+        cmd_final = 'ni \\"' .. loc_path .. '\\" -Force'
+        if not io.open(loc_path, "r") then
+            vim.fn.system('powershell -command "' .. cmd_first .. '|' .. cmd_final)
+        end
+    else
+        cmd_first = 'sh -c \'curl -fLo '
+        env_path = '"${XDG_DATA_HOME:-$HOME/.local/share}"'
+        loc_path = env_path .. '/nvim/site/autoload/plug.vim'
+        cmd_final = cmd_first .. loc_path .. " --create-dirs " .. url
+        if not io.open(loc_path, "r") then
+            vim.fn.system(cmd_final)
+        end
+    end
+
+    local plug = vim.fn['plug#']
+    vim.call('plug#begin', vim.fn.stdpath('data') .. '/vimplug')
+    plug("dhruvasagar/vim-table-mode")
+    plug("modulomedito/rookie_toys.nvim")
+    plug("preservim/nerdtree")
+    plug("skywind3000/asyncrun.vim")
+    plug("t9md/vim-textmanip")
+    plug("tpope/vim-commentary")
+    plug("tpope/vim-fugitive")
+    plug("tpope/vim-surround")
+    plug("tpope/vim-unimpaired")
+    plug("vim-scripts/DrawIt")
+    plug("williamboman/mason-lspconfig.nvim")
+    plug("williamboman/mason.nvim")
+    vim.call('plug#end')
+end
+
+local function setup_lsp()
+    require("mason").setup()
+    require("mason-lspconfig").setup({
+        ensure_installed = {
+            "clangd", "cmake", "jsonls", "lua_ls", "marksman", "pylsp", "rust_analyzer", "taplo",
+        }
+    })
+    vim.lsp.config('rust-analyzer', {
+        cmd = { 'rust-analyzer' },
+        root_markers = { '.git', 'Cargo.toml' },
+        filetypes = { 'rust' }
+    })
+    vim.lsp.config("luals", {
+        cmd = { 'lua-language-server' },
+        root_markers = { '.luarc.json', '.luarc.jsonc' },
+        filetypes = { 'lua' }
+    })
+    vim.lsp.config("taplo", {
+        cmd = { 'taplo', 'lsp', 'stdio' },
+        root_markers = { '.git', 'Cargo.toml' },
+        filetypes = { 'toml' },
+    })
+    vim.lsp.config("clangd", {
+        cmd = { 'clangd', '--clang-tidy', '--background-index', '--offset-encoding=utf-8', },
+        root_markers = { '.clangd', 'compile_commands.json' },
+        filetypes = { 'c', 'cpp' },
+    })
+    vim.lsp.enable({ "clangd", "luals", "taplo", "rust-analyzer" })
+    vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("LspConfig", { clear = true }),
+        callback = function(ev)
+            local bufnr = ev.buf
+            local kopt = { noremap = true, silent = true, buffer = bufnr }
+            local client = vim.lsp.get_client_by_id(ev.data.client_id)
+            if client ~= nil then
+                if client:supports_method('textDocument/completion') then
+                    vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
+                end
+                if client.name == "clangd" then
+                    vim.keymap.set("n", "<leader>hh", ":call CurtineIncSw()<CR>", kopt)
+                end
+            end
+            vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
+            vim.keymap.set("i", "<C-k>", vim.lsp.buf.signature_help, kopt)
+            vim.keymap.set("n", "<S-M-f>", vim.lsp.buf.format, kopt)
+            vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, kopt)
+            vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, kopt)
+            vim.keymap.set("n", "gd", vim.lsp.buf.definition, kopt)
+            vim.keymap.set("n", "gD", vim.lsp.buf.declaration, kopt)
+            vim.keymap.set("n", "gh", vim.lsp.buf.hover, kopt)
+            vim.keymap.set("n", "gi", vim.lsp.buf.implementation, kopt)
+            vim.keymap.set("n", "gr", vim.lsp.buf.references, kopt)
+            vim.keymap.set("n", "gs", vim.lsp.buf.document_symbol, kopt)
+            vim.keymap.set("n", "gy", vim.lsp.buf.type_definition, kopt)
+            vim.keymap.set("n", "[d", ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>", kopt)
+            vim.keymap.set("n", "]d", ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>", kopt)
+        end,
+    })
+end
+
+local function setup()
+    setup_misc()
+    setup_keymap()
+    setup_option()
+    setup_vimplug()
+    setup_lsp()
+end
+
+return {
+    setup = setup,
+    setup_keymap = setup_keymap,
+    setup_lsp = setup_lsp,
+    setup_misc = setup_misc,
+    setup_option = setup_option,
+    setup_vimplug = setup_vimplug,
+}
