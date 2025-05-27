@@ -200,11 +200,11 @@ local function setup_lsp()
 end
 
 local function setup()
-    setup_misc()
     setup_keymap()
+    setup_lsp()
+    setup_misc()
     setup_option()
     setup_vimplug()
-    setup_lsp()
 end
 
 return {
