@@ -1,15 +1,5 @@
-local M = {}
-
-if M.rookie_clangd_is_loaded == 1 then
-    return
-else
-    M.rookie_clangd_is_loaded = 1
-end
-
--- Setup
--- require("rookie_clangd").setup()
-local git = require("rookie_toys.git")
 local c = require("rookie_toys.c")
+local git = require("rookie_toys.git")
 
 -- -- User commands
 -- local api = require("rookie_clangd.api")
@@ -41,6 +31,3 @@ end, {})
 vim.api.nvim_create_user_command("RookieToysCToggleSourceHeader", function()
     c.toggle_source_header()
 end, {})
-
--- Final
-return M
