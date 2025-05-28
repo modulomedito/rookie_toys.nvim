@@ -40,17 +40,39 @@ local function setup_keymap()
     vim.keymap.set('o', 'H', 'g^', nsopt)
     vim.keymap.set('o', 'L', 'g_', nsopt)
 
-    -- Plugin related
+    -- Plugin related keymap
     vim.keymap.set('n', '<C-y>', ':NERDTreeToggle<CR>', nsopt)
     vim.keymap.set('n', '<F10>', ':copen <bar> AsyncRun cargo ', nopt)
     vim.keymap.set('n', '<leader>gf', ':lua require("rookie_toys.search").live_grep()<CR>', nsopt)
     vim.keymap.set('n', '<leader>gg', ':lua require("rookie_toys.search").grep_word_under_cursor()<CR>', nsopt)
-    vim.api.nvim_create_user_command("GD", function(_) require("rookie_toys.git").diff() end, {})
-    vim.api.nvim_create_user_command("GG", function(_) require("rookie_toys.git").open_git_graph_all() end, {})
-    vim.api.nvim_create_user_command("GGL", function(_) require("rookie_toys.git").open_git_graph_local() end, {})
-    vim.api.nvim_create_user_command("CC", function(_) require("rookie_clangd").api.generate_compile_commands() end, {})
-    vim.api.nvim_create_user_command("CA", function(_) require("rookie_clangd").api.add_define_symbol() end, {})
-    vim.api.nvim_create_user_command("CX", function(_) require("rookie_clangd").api.remove_define_symbol() end, {})
+
+    -- Plugin related command
+    vim.api.nvim_create_user_command("GD", function(_)
+        require("rookie_toys.git").diff()
+    end, {})
+    vim.api.nvim_create_user_command("GG", function(_)
+        local filetype = vim.bo.filetype
+        if filetype == "git" then
+            vim.cmd("quit")
+        end
+        require("rookie_toys.git").open_git_graph_all()
+    end, {})
+    vim.api.nvim_create_user_command("GGL", function(_)
+        local filetype = vim.bo.filetype
+        if filetype == "git" then
+            vim.cmd("quit")
+        end
+        require("rookie_toys.git").open_git_graph_local()
+    end, {})
+    vim.api.nvim_create_user_command("CC", function(_)
+        require("rookie_clangd").api.generate_compile_commands()
+    end, {})
+    vim.api.nvim_create_user_command("CA", function(_)
+        require("rookie_clangd").api.add_define_symbol()
+    end, {})
+    vim.api.nvim_create_user_command("CX", function(_)
+        require("rookie_clangd").api.remove_define_symbol()
+    end, {})
 end
 
 local function setup_option()
