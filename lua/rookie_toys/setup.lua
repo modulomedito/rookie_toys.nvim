@@ -106,7 +106,7 @@ local function setup_option()
     vim.opt.smartcase      = true
     vim.opt.smarttab       = true
     vim.opt.softtabstop    = 4
-    vim.opt.statusline     = "%f:%l:%c %m%r%h%w%q%y [enc=%{&fileencoding}] [ff=%{&fileformat}] [git=%{FugitiveStatusline()]}"
+    vim.opt.statusline     = "%f:%l:%c %m%r%h%w%q%y [enc=%{&fileencoding}] [ff=%{&fileformat}] [git=%{FugitiveStatusline()}]"
     vim.opt.swapfile       = false
     vim.opt.tabstop        = 4
     vim.opt.termguicolors  = true
