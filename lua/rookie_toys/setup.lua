@@ -199,30 +199,31 @@ local function setup_lsp()
         group = vim.api.nvim_create_augroup("LspConfig", { clear = true }),
         callback = function(ev)
             local bufnr = ev.buf
-            local kopt = { noremap = true, silent = true, buffer = bufnr }
+            local bufopt = { noremap = true, silent = true, buffer = bufnr }
             local client = vim.lsp.get_client_by_id(ev.data.client_id)
             if client ~= nil then
                 if client:supports_method('textDocument/completion') then
                     vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
                 end
                 if client.name == "clangd" then
-                    vim.keymap.set("n", "<leader>hh", ":call CurtineIncSw()<CR>", kopt)
+                    vim.keymap.set("n", "<leader>hh", ":call CurtineIncSw()<CR>", bufopt)
                 end
             end
             vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
-            vim.keymap.set("i", "<C-k>", vim.lsp.buf.signature_help, kopt)
-            vim.keymap.set("n", "<S-M-f>", vim.lsp.buf.format, kopt)
-            vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, kopt)
-            vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, kopt)
-            vim.keymap.set("n", "gd", vim.lsp.buf.definition, kopt)
-            vim.keymap.set("n", "gD", vim.lsp.buf.declaration, kopt)
-            vim.keymap.set("n", "gh", vim.lsp.buf.hover, kopt)
-            vim.keymap.set("n", "gi", vim.lsp.buf.implementation, kopt)
-            vim.keymap.set("n", "gr", vim.lsp.buf.references, kopt)
-            vim.keymap.set("n", "gs", vim.lsp.buf.document_symbol, kopt)
-            vim.keymap.set("n", "gy", vim.lsp.buf.type_definition, kopt)
-            vim.keymap.set("n", "[d", ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>", kopt)
-            vim.keymap.set("n", "]d", ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>", kopt)
+            vim.keymap.set("i", "<C-k>", vim.lsp.buf.signature_help, bufopt)
+            vim.keymap.set("n", "<S-M-f>", vim.lsp.buf.format, bufopt)
+            vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, bufopt)
+            vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, bufopt)
+            vim.keymap.set("n", "gd", vim.lsp.buf.definition, bufopt)
+            vim.keymap.set("n", "gD", vim.lsp.buf.declaration, bufopt)
+            vim.keymap.set("n", "gh", vim.lsp.buf.hover, bufopt)
+            vim.keymap.set("n", "gi", vim.lsp.buf.implementation, bufopt)
+            vim.keymap.set("n", "gr", vim.lsp.buf.references, bufopt)
+            vim.keymap.set("n", "gs", vim.lsp.buf.document_symbol, bufopt)
+            vim.keymap.set("n", "gy", vim.lsp.buf.type_definition, bufopt)
+            vim.keymap.set("n", "[d", ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>", bufopt)
+            vim.keymap.set("n", "]d", ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>", bufopt)
+            vim.keymap.set("n", "]D", ":lua vim.diagnostic.setqflist()<CR>", bufopt)
         end,
     })
 end
