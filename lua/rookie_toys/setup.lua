@@ -98,7 +98,7 @@ local function setup_option()
     vim.opt.clipboard      = "unnamed"
     vim.opt.colorcolumn    = "81,101"
     vim.opt.complete       = ".,w,b,u,t"
-    vim.opt.completeopt    = { "menuone", "longest", "preview" }
+    vim.opt.completeopt    = { "menuone", "noselect", "popup" }
     vim.opt.cursorcolumn   = true
     vim.opt.cursorline     = true
     vim.opt.expandtab      = true
@@ -220,7 +220,7 @@ local function setup_lsp()
                     vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
                 end
                 if client.name == "clangd" then
-                    vim.keymap.set("n", "<leader>hh", ":call CurtineIncSw()<CR>", bufopt)
+                    vim.keymap.set("n", "<leader>hh", ":lua require("rookie_toys.c").toggle_source_header()<CR>", bufopt)
                 end
             end
             vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
