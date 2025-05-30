@@ -152,6 +152,7 @@ local function generate_compile_commands_json()
     writeln("]")
 
     ccj_file_handler:close()
+    print("[compile_commands.json] generated to " .. current_dir)
 end
 
 return {
