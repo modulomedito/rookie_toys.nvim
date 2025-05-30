@@ -42,7 +42,7 @@ local function setup_keymap()
     vim.keymap.set('v', 'y', 'ygv<Esc>', nsopt)
 
     -- Plugin related keymap
-    vim.keymap.set('n', '<C-y>', ':NERDTreeToggle<CR>', nsopt)
+    vim.keymap.set('n', '<C-y>', ':NvimTreeToggle<CR>', nsopt)
     vim.keymap.set('n', '<F10>', ':copen <bar> AsyncRun cargo ', nopt)
     vim.keymap.set('n', '<leader>gf', ':lua require("rookie_toys.search").live_grep()<CR>', nsopt)
     vim.keymap.set('n', '<leader>gg', ':lua require("rookie_toys.search").grep_word_under_cursor()<CR>', nsopt)
@@ -133,6 +133,14 @@ local function setup_option()
     vim.opt.wrap           = false
     vim.opt.path:append("**")
     vim.opt.shada:append("!")
+end
+
+local function setup_plugins()
+    require("nvim-tree").setup({
+        git = {
+            enable = false
+        }
+    })
 end
 
 local function setup_vimplug()
@@ -247,6 +255,7 @@ local function setup()
     setup_misc()
     setup_keymap()
     setup_option()
+    setup_plugins()
     -- setup_vimplug()
     setup_lsp()
 end
