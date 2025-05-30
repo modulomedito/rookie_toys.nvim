@@ -26,8 +26,9 @@ local function live_grep()
     if check_rg() == 0 then return end
 
     local user_input = vim.fn.input("Enter your searching pattern: ")
-    print("Searching: " .. user_input)
-    do_grep_word(user_input)
+    if user_input then
+        do_grep_word(user_input)
+    end
 end
 
 local function grep_word_under_cursor()
