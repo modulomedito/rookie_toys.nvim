@@ -8,6 +8,7 @@ local function setup_keymap()
     local nsopt = { noremap = true, silent = true }
 
     vim.g.mapleader = " "
+    vim.keymap.set('c', '<C-v>', '<C-r>*', nopt)
     vim.keymap.set('n', '*', '*N', nsopt)
     vim.keymap.set('n', '<C-d>', '<C-d>zz', nsopt)
     vim.keymap.set('n', '<C-f>', '<C-u>zz', nsopt)
@@ -27,6 +28,8 @@ local function setup_keymap()
     vim.keymap.set('n', 'j', 'gj', nsopt)
     vim.keymap.set('n', 'k', 'gk', nsopt)
     vim.keymap.set('n', 'o', 'o <BS><Esc>', nsopt)
+    vim.keymap.set('o', 'H', 'g^', nsopt)
+    vim.keymap.set('o', 'L', 'g_', nsopt)
     vim.keymap.set('v', '/', '"-y/<C-r>-<CR>N', nsopt)
     vim.keymap.set('v', '<C-d>', '<C-d>zz', nsopt)
     vim.keymap.set('v', '<C-f>', '<C-u>zz', nsopt)
@@ -36,9 +39,7 @@ local function setup_keymap()
     vim.keymap.set('v', '<leader>ss', ":sort<CR>", nsopt)
     vim.keymap.set('v', 'H', 'g^', nsopt)
     vim.keymap.set('v', 'L', 'g_', nsopt)
-    vim.keymap.set('c', '<C-v>', '<C-r>*', nopt)
-    vim.keymap.set('o', 'H', 'g^', nsopt)
-    vim.keymap.set('o', 'L', 'g_', nsopt)
+    vim.keymap.set('v', 'y', 'ygv<Esc>', nsopt)
 
     -- Plugin related keymap
     vim.keymap.set('n', '<C-y>', ':NERDTreeToggle<CR>', nsopt)
