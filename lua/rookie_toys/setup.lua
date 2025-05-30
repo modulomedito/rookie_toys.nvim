@@ -220,7 +220,7 @@ local function setup_lsp()
                     vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
                 end
                 if client.name == "clangd" then
-                    vim.keymap.set("n", "<leader>hh", ":lua require("rookie_toys.c").toggle_source_header()<CR>", bufopt)
+                    vim.keymap.set("n", "<leader>hh", ':lua require("rookie_toys.c").toggle_source_header()<CR>', bufopt)
                 end
             end
             vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
