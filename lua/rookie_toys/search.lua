@@ -26,7 +26,7 @@ local function live_grep()
     if check_rg() == 0 then return end
 
     local user_input = vim.fn.input("Enter your searching pattern: ")
-    if user_input then
+    if user_input and user_input:match("%S") then
         do_grep_word(user_input)
     end
 end
