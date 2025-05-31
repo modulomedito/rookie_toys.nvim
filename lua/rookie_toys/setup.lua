@@ -60,6 +60,7 @@ local function setup_keymap()
     vim.keymap.set("x", "<Down>", "<Plug>(textmanip-move-down-r)", nsopt)
     vim.keymap.set("x", "<Left>", "<Plug>(textmanip-move-left-r)", nsopt)
     vim.keymap.set("x", "<Right>", "<Plug>(textmanip-move-right-r)", nsopt)
+    vim.keymap.set("n", "<leader>tsh", "TSBufToggle highlight", nsopt)
 
     -- Plugin related command
     vim.api.nvim_create_user_command("GD", function(_)
@@ -286,12 +287,12 @@ local function setup_lsp()
 end
 
 local function setup_autocmd()
-    vim.api.nvim_create_autocmd("BufRead", {
-        pattern = { "*.md", ".lua", ".rs" },
-        callback = function()
-            vim.cmd("TSBufEnable highlight")
-        end,
-    })
+    -- vim.api.nvim_create_autocmd("BufRead", {
+    --     pattern = { "*.md", ".lua", ".rs" },
+    --     callback = function()
+    --         vim.cmd("TSBufEnable highlight")
+    --     end,
+    -- })
 end
 
 local function setup()
