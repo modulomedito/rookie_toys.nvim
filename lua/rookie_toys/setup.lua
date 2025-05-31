@@ -155,7 +155,7 @@ local function setup_plugins()
         defaults = { lazy = false },
         { "MattesGroeger/vim-bookmarks" },
         { "dhruvasagar/vim-table-mode" },
-        { "nvim-tree/nvim-tree.lua" },
+        { "nvim-tree/nvim-tree.lua",          tag = "v1.6.1" },
         { "nvim-treesitter/nvim-treesitter" },
         { "skywind3000/asyncrun.vim" },
         { "t9md/vim-textmanip" },
