@@ -142,6 +142,34 @@ local function setup_option()
 end
 
 local function setup_plugins()
+    -- Setup lazy.nvim
+    local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+    if not io.open(lazypath .. "/README.md", "r") then
+        local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+        vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+    end
+    vim.opt.rtp:prepend(lazypath)
+
+    -- Plugins
+    require("lazy").setup({
+        defaults = { lazy = false },
+        { "MattesGroeger/vim-bookmarks" },
+        { "dhruvasagar/vim-table-mode" },
+        { "nvim-tree/nvim-tree.lua" },
+        { "nvim-treesitter/nvim-treesitter" },
+        { "skywind3000/asyncrun.vim" },
+        { "t9md/vim-textmanip" },
+        { "tpope/vim-commentary" },
+        { "tpope/vim-fugitive" },
+        { "tpope/vim-surround" },
+        { "tpope/vim-unimpaired" },
+        { "vim-scripts/DrawIt" },
+        { "williamboman/mason-lspconfig.nvim" },
+        { "williamboman/mason.nvim" },
+        { "modulomedito/rookie_toys.nvim" },
+    })
+
+    -- Plugin setups
     require("nvim-tree").setup({
         git = {
             enable = false
@@ -268,11 +296,10 @@ end
 
 local function setup()
     setup_misc()
+    setup_plugins()
     setup_keymap()
     setup_option()
-    setup_plugins()
     setup_autocmd()
-    -- setup_vimplug()
     setup_lsp()
 end
 
