@@ -60,7 +60,7 @@ local function setup_keymap()
     vim.keymap.set("x", "<Down>", "<Plug>(textmanip-move-down-r)", nsopt)
     vim.keymap.set("x", "<Left>", "<Plug>(textmanip-move-left-r)", nsopt)
     vim.keymap.set("x", "<Right>", "<Plug>(textmanip-move-right-r)", nsopt)
-    vim.keymap.set("n", "<leader>tsh", "TSBufToggle highlight", nsopt)
+    vim.keymap.set("n", "<leader>tsh", ":TSBufToggle highlight<CR>", nsopt)
 
     -- Plugin related command
     vim.api.nvim_create_user_command("GD", function(_)
