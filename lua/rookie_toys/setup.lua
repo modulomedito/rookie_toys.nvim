@@ -88,6 +88,12 @@ local function setup_keymap()
     vim.api.nvim_create_user_command("CX", function(_)
         require("rookie_toys.c").remove_ccj_define_symbol()
     end, {})
+    vim.api.nvim_create_user_command("Retab", function()
+        vim.cmd("set ts=4")
+        vim.cmd("set noet")
+        vim.cmd("%retab!")
+        vim.cmd("set et")
+    end, {})
 end
 
 local function setup_option()
