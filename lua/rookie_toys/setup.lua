@@ -257,11 +257,21 @@ local function setup_lsp()
     })
 end
 
+local function setup_autocmd()
+    vim.api.nvim_create_autocmd("BufRead", {
+        pattern = { "*.md", ".lua", ".rs" },
+        callback = function()
+            vim.cmd("TSBufEnable highlight")
+        end,
+    })
+end
+
 local function setup()
     setup_misc()
     setup_keymap()
     setup_option()
     setup_plugins()
+    setup_autocmd()
     -- setup_vimplug()
     setup_lsp()
 end
