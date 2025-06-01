@@ -8,6 +8,8 @@ local function setup_keymap()
     local nsopt = { noremap = true, silent = true }
 
     vim.g.mapleader = " "
+
+    vim.keymap.set("n", "<leader>lh", ":noh<CR>", nsopt)
     vim.keymap.set('c', '<C-v>', '<C-r>*', nopt)
     vim.keymap.set('n', '*', '*N', nsopt)
     vim.keymap.set('n', '<C-d>', '<C-d>zz', nsopt)
@@ -62,7 +64,7 @@ local function setup_keymap()
     vim.keymap.set("x", "<Down>", "<Plug>(textmanip-move-down-r)", nsopt)
     vim.keymap.set("x", "<Left>", "<Plug>(textmanip-move-left-r)", nsopt)
     vim.keymap.set("x", "<Right>", "<Plug>(textmanip-move-right-r)", nsopt)
-    vim.keymap.set("n", "<leader>tsh", ":TSBufToggle highlight<CR>", nsopt)
+    vim.keymap.set("n", "<leader>thl", ":TSBufToggle highlight<CR>", nsopt)
 
     -- Plugin related command
     vim.api.nvim_create_user_command("GD", function(_)
