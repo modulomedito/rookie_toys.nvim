@@ -11,7 +11,7 @@ local function setup_keymap()
 
     vim.keymap.set("n", "<leader>lh", ":noh<CR>", nsopt)
     vim.keymap.set('c', '<C-v>', '<C-r>*', nopt)
-    vim.keymap.set('n', '*', '*N', nsopt)
+    vim.keymap.set('n', '*', '*Nzz', nsopt)
     vim.keymap.set('n', '<C-d>', '<C-d>zz', nsopt)
     vim.keymap.set('n', '<C-f>', '<C-u>zz', nsopt)
     vim.keymap.set('n', '<C-p>', ':find *', nopt)
