@@ -62,7 +62,7 @@ local function setup_keymap()
     vim.keymap.set("x", "<Right>", "<Plug>(textmanip-move-right-r)", nsopt)
     vim.keymap.set("x", "<Up>", "<Plug>(textmanip-move-up-r)", nsopt)
     vim.keymap.set('n', '<C-y>', ':NvimTreeToggle<CR>', nsopt)
-    vim.keymap.set('n', '<F10>', ':require("rookie_toys.run").cargo_run()<CR>', nsopt)
+    vim.keymap.set('n', '<F10>', ':lua require("rookie_toys.run").cargo_run()<CR>', nsopt)
     vim.keymap.set('n', '<leader>gf', ':lua require("rookie_toys.search").live_grep()<CR>', nsopt)
     vim.keymap.set('n', '<leader>gg', ':lua require("rookie_toys.search").grep_word_under_cursor()<CR>', nsopt)
 
