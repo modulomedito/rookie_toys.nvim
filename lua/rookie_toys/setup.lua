@@ -46,25 +46,25 @@ local function setup_keymap()
     vim.keymap.set('v', 'y', 'ygv<Esc>', nsopt)
 
     -- Plugin related keymap
-    vim.keymap.set('n', '<C-y>', ':NvimTreeToggle<CR>', nsopt)
-    vim.keymap.set('n', '<F10>', ':copen <bar> AsyncRun cargo ', nopt)
-    vim.keymap.set('n', '<leader>gf', ':lua require("rookie_toys.search").live_grep()<CR>', nsopt)
-    vim.keymap.set('n', '<leader>gg', ':lua require("rookie_toys.search").grep_word_under_cursor()<CR>', nsopt)
-    vim.keymap.set("n", "<M-d>", "<Plug>(textmanip-duplicate-down)", nsopt)
-    vim.keymap.set("x", "<M-d>", "<Plug>(textmanip-duplicate-down)", nsopt)
+    vim.keymap.set("n", "<F6>", "<Plug>(textmanip-toggle-mode)", nsopt)
     vim.keymap.set("n", "<M-D>", "<Plug>(textmanip-duplicate-up)", nsopt)
-    vim.keymap.set("x", "<M-D>", "<Plug>(textmanip-duplicate-up)", nsopt)
+    vim.keymap.set("n", "<M-d>", "<Plug>(textmanip-duplicate-down)", nsopt)
+    vim.keymap.set("n", "<leader>thl", ":TSBufToggle highlight<CR>", nsopt)
+    vim.keymap.set("x", "<C-h>", "<Plug>(textmanip-move-left)", nsopt)
     vim.keymap.set("x", "<C-j>", "<Plug>(textmanip-move-down)", nsopt)
     vim.keymap.set("x", "<C-k>", "<Plug>(textmanip-move-up)", nsopt)
-    vim.keymap.set("x", "<C-h>", "<Plug>(textmanip-move-left)", nsopt)
     vim.keymap.set("x", "<C-l>", "<Plug>(textmanip-move-right)", nsopt)
-    vim.keymap.set("n", "<F6>", "<Plug>(textmanip-toggle-mode)", nsopt)
-    vim.keymap.set("x", "<F6>", "<Plug>(textmanip-toggle-mode)", nsopt)
-    vim.keymap.set("x", "<Up>", "<Plug>(textmanip-move-up-r)", nsopt)
     vim.keymap.set("x", "<Down>", "<Plug>(textmanip-move-down-r)", nsopt)
+    vim.keymap.set("x", "<F6>", "<Plug>(textmanip-toggle-mode)", nsopt)
     vim.keymap.set("x", "<Left>", "<Plug>(textmanip-move-left-r)", nsopt)
+    vim.keymap.set("x", "<M-D>", "<Plug>(textmanip-duplicate-up)", nsopt)
+    vim.keymap.set("x", "<M-d>", "<Plug>(textmanip-duplicate-down)", nsopt)
     vim.keymap.set("x", "<Right>", "<Plug>(textmanip-move-right-r)", nsopt)
-    vim.keymap.set("n", "<leader>thl", ":TSBufToggle highlight<CR>", nsopt)
+    vim.keymap.set("x", "<Up>", "<Plug>(textmanip-move-up-r)", nsopt)
+    vim.keymap.set('n', '<C-y>', ':NvimTreeToggle<CR>', nsopt)
+    vim.keymap.set('n', '<F10>', ':require("rookie_toys.run").cargo_run()<CR>', nsopt)
+    vim.keymap.set('n', '<leader>gf', ':lua require("rookie_toys.search").live_grep()<CR>', nsopt)
+    vim.keymap.set('n', '<leader>gg', ':lua require("rookie_toys.search").grep_word_under_cursor()<CR>', nsopt)
 
     -- Plugin related command
     vim.api.nvim_create_user_command("GD", function(_)
@@ -300,13 +300,7 @@ local function setup_lsp()
 end
 
 local function setup_usrcmd()
-    vim.api.nvim_create_user_command('CargoRun', function()
-        vim.fn.jobstart('cargo run', {
-            on_stdout = require("rookie_toys.run").handle_cargo_output,
-            on_stderr = require("rookie_toys.run").handle_cargo_output,
-            on_exit = require("rookie_toys.run").handle_cargo_exit
-        })
-    end, {})
+    -- vim.api.nvim_create_user_command('CargoRun', require("rookie_toys.run").cargo_run(), {})
 end
 
 local function setup()
