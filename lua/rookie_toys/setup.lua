@@ -182,7 +182,7 @@ local function setup_plugins()
         }
     })
 
-    require("neoscroll").setup()
+    require('neoscroll').setup({ mappings = { '<C-u>', '<C-d>', '<C-f>' } })
     local keymap = {
         ["<C-u>"] = function() require("neoscroll").ctrl_u({ duration = 350, easing = "sine" }) end,
         ["<C-f>"] = function() require("neoscroll").ctrl_u({ duration = 350, easing = "sine" }) end,
