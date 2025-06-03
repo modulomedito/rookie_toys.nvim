@@ -20,8 +20,8 @@ end
 
 local function handle_cargo_exit(job_id, data, event)
     vim.notify("Cargo run completed with exit code: " .. data, vim.log.levels.INFO)
-    vim.cmd('call setqflist([])')
-    vim.cmd('cclose')
+    -- vim.cmd('call setqflist([])')
+    -- vim.cmd('cclose')
 end
 
 local function cargo_run()
