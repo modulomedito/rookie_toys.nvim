@@ -11,8 +11,10 @@ local function handle_cargo_output(job_id, data, event)
     end
 
     if #lines > 0 then
-        vim.fn.setqflist({}, 'a', { lines = lines })
+        vim.fn.setqflist({}, 'a', {lines = lines})
         vim.cmd('copen')
+        -- Scroll to bottom of quickfix window
+        vim.cmd('normal! G')
     end
 end
 
