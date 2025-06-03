@@ -300,6 +300,13 @@ end
 
 local function setup_usrcmd()
     -- vim.api.nvim_create_user_command('CargoRun', require("rookie_toys.run").cargo_run(), {})
+    local bufopt = { noremap = true, silent = true, buffer = bufnr }
+    vim.api.nvim_create_autocmd("FileType", {
+        pattern = "qf",
+        callback = function()
+            vim.keymap.set("n", "<C-q>", ":call setqflist([])<CR>:cclose<CR>", bufopt)
+        end,
+    })
 end
 
 local function setup()
