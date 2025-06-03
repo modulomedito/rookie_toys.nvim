@@ -299,13 +299,14 @@ local function setup_lsp()
     })
 end
 
-local function setup_autocmd()
-    -- vim.api.nvim_create_autocmd("BufRead", {
-    --     pattern = { "*.md", ".lua", ".rs" },
-    --     callback = function()
-    --         vim.cmd("TSBufEnable highlight")
-    --     end,
-    -- })
+local function setup_usrcmd()
+    vim.api.nvim_create_user_command('CargoRun', function()
+        vim.fn.jobstart('cargo run', {
+            on_stdout = require("rookie_toys.run").handle_cargo_output,
+            on_stderr = require("rookie_toys.run").handle_cargo_output,
+            on_exit = require("rookie_toys.run").handle_cargo_exit
+        })
+    end, {})
 end
 
 local function setup()
@@ -313,7 +314,7 @@ local function setup()
     setup_keymap()
     setup_plugins()
     setup_option()
-    setup_autocmd()
+    setup_usrcmd()
     setup_lsp()
 end
 
