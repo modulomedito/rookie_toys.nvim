@@ -160,7 +160,7 @@ local function setup_plugins()
         defaults = { lazy = false },
         { "MattesGroeger/vim-bookmarks" },
         { "dhruvasagar/vim-table-mode" },
-        { "karb94/neoscroll.nvim" },
+        -- { "karb94/neoscroll.nvim" },
         { "nvim-tree/nvim-tree.lua",          tag = "v1.6.1" },
         { "nvim-treesitter/nvim-treesitter" },
         { "skywind3000/asyncrun.vim" },
@@ -182,13 +182,13 @@ local function setup_plugins()
         }
     })
 
-    require("neoscroll").setup({ mappings = { "<C-u>", "<C-d>", "<C-f>", "zt", "zz", "zb" } })
-    local keymap = {
-        ["<C-u>"] = function() require("neoscroll").ctrl_u({ duration = 200, easing = "sine" }) end,
-        ["<C-f>"] = function() require("neoscroll").ctrl_u({ duration = 200, easing = "sine" }) end,
-        ["<C-d>"] = function() require("neoscroll").ctrl_d({ duration = 200, easing = "sine" }) end,
-    }
-    for key, func in pairs(keymap) do vim.keymap.set({ "n", "v", "x" }, key, func) end
+    -- require("neoscroll").setup({ mappings = { "<C-u>", "<C-d>", "<C-f>", "zt", "zz", "zb" } })
+    -- local keymap = {
+    --     ["<C-u>"] = function() require("neoscroll").ctrl_u({ duration = 200, easing = "sine" }) end,
+    --     ["<C-f>"] = function() require("neoscroll").ctrl_u({ duration = 200, easing = "sine" }) end,
+    --     ["<C-d>"] = function() require("neoscroll").ctrl_d({ duration = 200, easing = "sine" }) end,
+    -- }
+    -- for key, func in pairs(keymap) do vim.keymap.set({ "n", "v", "x" }, key, func) end
 end
 
 local function setup_vimplug()
