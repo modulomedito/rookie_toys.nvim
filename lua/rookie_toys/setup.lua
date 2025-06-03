@@ -184,9 +184,9 @@ local function setup_plugins()
 
     require("neoscroll").setup({ mappings = { "<C-u>", "<C-d>", "<C-f>", "zt", "zz", "zb" } })
     local keymap = {
-        ["<C-u>"] = function() require("neoscroll").ctrl_u({ duration = 250, easing = "sine" }) end,
-        ["<C-f>"] = function() require("neoscroll").ctrl_u({ duration = 250, easing = "sine" }) end,
-        ["<C-d>"] = function() require("neoscroll").ctrl_d({ duration = 250, easing = "sine" }) end,
+        ["<C-u>"] = function() require("neoscroll").ctrl_u({ duration = 200, easing = "sine" }) end,
+        ["<C-f>"] = function() require("neoscroll").ctrl_u({ duration = 200, easing = "sine" }) end,
+        ["<C-d>"] = function() require("neoscroll").ctrl_d({ duration = 200, easing = "sine" }) end,
     }
     for key, func in pairs(keymap) do vim.keymap.set({ "n", "v", "x" }, key, func) end
 end
