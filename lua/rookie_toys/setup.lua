@@ -4,8 +4,8 @@ local function setup_misc()
 end
 
 local function setup_keymap()
-    local nopt = { noremap = true }
-    local nsopt = { noremap = true, silent = true }
+    local nopt = {noremap = true}
+    local nsopt = {noremap = true, silent = true}
 
     vim.g.mapleader = " "
 
@@ -17,7 +17,8 @@ local function setup_keymap()
     vim.keymap.set('n', '<C-p>', ':find *', nopt)
     vim.keymap.set('n', '<C-q>', ':q<CR>', nsopt)
     vim.keymap.set('n', '<C-s>', ":%s/\\s\\+$//e<bar>w<CR>", nsopt)
-    vim.keymap.set('n', '<F2>', ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>", nopt)
+    vim.keymap.set('n', '<F2>',
+                   ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>", nopt)
     vim.keymap.set('n', '<M-j>', ':m .+1<CR>==', nsopt)
     vim.keymap.set('n', '<M-k>', ':m .-2<CR>==', nsopt)
     vim.keymap.set('n', '<leader>p', '"0p', nsopt)
@@ -62,9 +63,13 @@ local function setup_keymap()
     vim.keymap.set("x", "<Right>", "<Plug>(textmanip-move-right-r)", nsopt)
     vim.keymap.set("x", "<Up>", "<Plug>(textmanip-move-up-r)", nsopt)
     vim.keymap.set('n', '<C-y>', ':NvimTreeToggle<CR>', nsopt)
-    vim.keymap.set('n', '<F10>', ':lua require("rookie_toys.run").cargo_run()<CR>', nsopt)
-    vim.keymap.set('n', '<leader>gf', ':lua require("rookie_toys.search").live_grep()<CR>', nsopt)
-    vim.keymap.set('n', '<leader>gg', ':lua require("rookie_toys.search").grep_word_under_cursor()<CR>', nsopt)
+    vim.keymap.set('n', '<F10>',
+                   ':lua require("rookie_toys.run").cargo_run()<CR>', nsopt)
+    vim.keymap.set('n', '<leader>gf',
+                   ':lua require("rookie_toys.search").live_grep()<CR>', nsopt)
+    vim.keymap.set('n', '<leader>gg',
+                   ':lua require("rookie_toys.search").grep_word_under_cursor()<CR>',
+                   nsopt)
 
     -- Plugin related command
     vim.api.nvim_create_user_command("GD", function(_)
@@ -72,16 +77,12 @@ local function setup_keymap()
     end, {})
     vim.api.nvim_create_user_command("GG", function(_)
         local filetype = vim.bo.filetype
-        if filetype == "git" then
-            vim.cmd("quit")
-        end
+        if filetype == "git" then vim.cmd("quit") end
         require("rookie_toys.git").open_git_graph_all()
     end, {})
     vim.api.nvim_create_user_command("GGL", function(_)
         local filetype = vim.bo.filetype
-        if filetype == "git" then
-            vim.cmd("quit")
-        end
+        if filetype == "git" then vim.cmd("quit") end
         require("rookie_toys.git").open_git_graph_local()
     end, {})
     vim.api.nvim_create_user_command("CC", function(_)
@@ -102,46 +103,47 @@ local function setup_keymap()
 end
 
 local function setup_option()
-    vim.opt.autoindent     = true
-    vim.opt.autoread       = true
-    vim.opt.background     = "dark"
-    vim.opt.belloff        = "all"
-    vim.opt.breakindent    = true
-    vim.opt.clipboard      = "unnamed"
-    vim.opt.colorcolumn    = "81,101"
-    vim.opt.complete       = ".,w,b,u,t"
-    vim.opt.completeopt    = { "menuone", "noselect", "popup" }
-    vim.opt.cursorcolumn   = true
-    vim.opt.cursorline     = true
-    vim.opt.expandtab      = true
-    vim.opt.foldenable     = false
-    vim.opt.grepformat     = "%f:%l:%c:%m,%f:%l:%m"
-    vim.opt.hlsearch       = true
-    vim.opt.ignorecase     = true
-    vim.opt.infercase      = true
-    vim.opt.iskeyword      = "@,48-57,_,192-255,-,#"
-    vim.opt.laststatus     = 2
-    vim.opt.list           = true
-    vim.opt.listchars      = { tab = "-->", trail = "~", nbsp = "␣" }
-    vim.opt.number         = true
-    vim.opt.pumheight      = 50
+    vim.opt.autoindent = true
+    vim.opt.autoread = true
+    vim.opt.background = "dark"
+    vim.opt.belloff = "all"
+    vim.opt.breakindent = true
+    vim.opt.clipboard = "unnamed"
+    vim.opt.colorcolumn = "81,101"
+    vim.opt.complete = ".,w,b,u,t"
+    vim.opt.completeopt = {"menuone", "noselect", "popup"}
+    vim.opt.cursorcolumn = true
+    vim.opt.cursorline = true
+    vim.opt.expandtab = true
+    vim.opt.foldenable = false
+    vim.opt.grepformat = "%f:%l:%c:%m,%f:%l:%m"
+    vim.opt.hlsearch = true
+    vim.opt.ignorecase = true
+    vim.opt.infercase = true
+    vim.opt.iskeyword = "@,48-57,_,192-255,-,#"
+    vim.opt.laststatus = 2
+    vim.opt.list = true
+    vim.opt.listchars = {tab = "-->", trail = "~", nbsp = "␣"}
+    vim.opt.number = true
+    vim.opt.pumheight = 50
     vim.opt.relativenumber = true
-    vim.opt.shiftwidth     = 4
-    vim.opt.shortmess      = "flnxtocTOCI"
-    vim.opt.signcolumn     = "yes"
-    vim.opt.smartcase      = true
-    vim.opt.smarttab       = true
-    vim.opt.softtabstop    = 4
-    vim.opt.statusline     = "%f:%l:%c %m%r%h%w%q%y [enc=%{&fileencoding}] [ff=%{&fileformat}] %{FugitiveStatusline()}"
-    vim.opt.swapfile       = false
-    vim.opt.tabstop        = 4
-    vim.opt.termguicolors  = true
-    vim.opt.textwidth      = 100
-    vim.opt.undodir        = os.getenv("HOME") .. "/.vim/undo/"
-    vim.opt.undofile       = true
+    vim.opt.shiftwidth = 4
+    vim.opt.shortmess = "flnxtocTOCI"
+    vim.opt.signcolumn = "yes"
+    vim.opt.smartcase = true
+    vim.opt.smarttab = true
+    vim.opt.softtabstop = 4
+    vim.opt.statusline =
+        "%f:%l:%c %m%r%h%w%q%y [enc=%{&fileencoding}] [ff=%{&fileformat}] %{FugitiveStatusline()}"
+    vim.opt.swapfile = false
+    vim.opt.tabstop = 4
+    vim.opt.termguicolors = true
+    vim.opt.textwidth = 100
+    vim.opt.undodir = os.getenv("HOME") .. "/.vim/undo/"
+    vim.opt.undofile = true
     vim.opt.wildignorecase = true
-    vim.opt.wildoptions    = "pum"
-    vim.opt.wrap           = false
+    vim.opt.wildoptions = "pum"
+    vim.opt.wrap = false
     vim.opt.path:append("**")
     vim.opt.shada:append("!")
 end
@@ -151,35 +153,38 @@ local function setup_plugins()
     local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
     if not io.open(lazypath .. "/README.md", "r") then
         local lazyrepo = "https://github.com/folke/lazy.nvim.git"
-        vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+        vim.fn.system({
+            "git",
+            "clone",
+            "--filter=blob:none",
+            "--branch=stable",
+            lazyrepo,
+            lazypath
+        })
     end
     vim.opt.rtp:prepend(lazypath)
 
     -- Plugins
     require("lazy").setup({
-        defaults = { lazy = false },
-        { "MattesGroeger/vim-bookmarks" },
-        { "dhruvasagar/vim-table-mode" },
+        defaults = {lazy = false},
+        {"MattesGroeger/vim-bookmarks"},
+        {"dhruvasagar/vim-table-mode"},
         -- { "karb94/neoscroll.nvim" },
-        { "nvim-tree/nvim-tree.lua",          tag = "v1.6.1" },
-        { "nvim-treesitter/nvim-treesitter" },
-        { "t9md/vim-textmanip" },
-        { "tpope/vim-commentary" },
-        { "tpope/vim-fugitive" },
-        { "tpope/vim-surround" },
-        { "tpope/vim-unimpaired" },
-        { "vim-scripts/DrawIt" },
-        { "williamboman/mason-lspconfig.nvim" },
-        { "williamboman/mason.nvim" },
-        { "modulomedito/rookie_toys.nvim" },
+        {"nvim-tree/nvim-tree.lua", tag = "v1.6.1"},
+        {"nvim-treesitter/nvim-treesitter"},
+        {"t9md/vim-textmanip"},
+        {"tpope/vim-commentary"},
+        {"tpope/vim-fugitive"},
+        {"tpope/vim-surround"},
+        {"tpope/vim-unimpaired"},
+        {"vim-scripts/DrawIt"},
+        {"williamboman/mason-lspconfig.nvim"},
+        {"williamboman/mason.nvim"},
+        {"modulomedito/rookie_toys.nvim"}
     })
 
     -- Plugin setups
-    require("nvim-tree").setup({
-        git = {
-            enable = false
-        }
-    })
+    require("nvim-tree").setup({git = {enable = false}})
 
     -- require("neoscroll").setup({ mappings = { "<C-u>", "<C-d>", "<C-f>", "zt", "zz", "zb" } })
     -- local keymap = {
@@ -195,24 +200,25 @@ local function setup_vimplug()
     local env_path = ""
     local loc_path = ""
     local cmd_final = ""
-    local url = "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+    local url =
+        "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
 
     if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
         cmd_first = 'iwr -useb ' .. url
-        env_path = '$(@($env:XDG_DATA_HOME, $env:LOCALAPPDATA)[$null -eq $env:XDG_DATA_HOME])'
+        env_path =
+            '$(@($env:XDG_DATA_HOME, $env:LOCALAPPDATA)[$null -eq $env:XDG_DATA_HOME])'
         loc_path = env_path .. '/nvim-data/site/autoload/plug.vim'
         cmd_final = 'ni \\"' .. loc_path .. '\\" -Force'
         if not io.open(loc_path, "r") then
-            vim.fn.system('powershell -command "' .. cmd_first .. '|' .. cmd_final)
+            vim.fn.system('powershell -command "' .. cmd_first .. '|' ..
+                              cmd_final)
         end
     else
         cmd_first = 'sh -c \'curl -fLo '
         env_path = '"${XDG_DATA_HOME:-$HOME/.local/share}"'
         loc_path = env_path .. '/nvim/site/autoload/plug.vim'
         cmd_final = cmd_first .. loc_path .. " --create-dirs " .. url
-        if not io.open(loc_path, "r") then
-            vim.fn.system(cmd_final)
-        end
+        if not io.open(loc_path, "r") then vim.fn.system(cmd_final) end
     end
 
     local plug = vim.fn['plug#']
@@ -236,47 +242,62 @@ local function setup_lsp()
     require("mason").setup()
     require("mason-lspconfig").setup({
         ensure_installed = {
-            "clangd", "cmake", "jsonls", "lua_ls", "marksman", "pylsp", "rust_analyzer", "taplo",
+            "clangd",
+            "cmake",
+            "jsonls",
+            "lua_ls",
+            "marksman",
+            "pylsp",
+            "rust_analyzer",
+            "taplo"
         }
     })
     vim.lsp.config('rust-analyzer', {
-        cmd = { 'rust-analyzer' },
-        root_markers = { '.git', 'Cargo.toml' },
-        filetypes = { 'rust' }
+        cmd = {'rust-analyzer'},
+        root_markers = {'.git', 'Cargo.toml'},
+        filetypes = {'rust'}
     })
     vim.lsp.config("luals", {
-        cmd = { 'lua-language-server' },
-        root_markers = { '.luarc.json', '.luarc.jsonc' },
-        filetypes = { 'lua' }
+        cmd = {'lua-language-server'},
+        root_markers = {'.luarc.json', '.luarc.jsonc'},
+        filetypes = {'lua'}
     })
     vim.lsp.config('markdown', {
-        cmd = { 'marksman' },
-        root_markers = { '.git' },
-        filetypes = { 'markdown' }
+        cmd = {'marksman'},
+        root_markers = {'.git'},
+        filetypes = {'markdown'}
     })
     vim.lsp.config("taplo", {
-        cmd = { 'taplo', 'lsp', 'stdio' },
-        root_markers = { '.git', 'Cargo.toml' },
-        filetypes = { 'toml' },
+        cmd = {'taplo', 'lsp', 'stdio'},
+        root_markers = {'.git', 'Cargo.toml'},
+        filetypes = {'toml'}
     })
     vim.lsp.config("clangd", {
-        cmd = { 'clangd', '--clang-tidy', '--background-index', '--offset-encoding=utf-8', },
-        root_markers = { '.clangd', 'compile_commands.json' },
-        filetypes = { 'c', 'cpp' },
+        cmd = {
+            'clangd',
+            '--clang-tidy',
+            '--background-index',
+            '--offset-encoding=utf-8'
+        },
+        root_markers = {'.clangd', 'compile_commands.json'},
+        filetypes = {'c', 'cpp'}
     })
-    vim.lsp.enable({ "clangd", "luals", "markdown", "taplo", "rust-analyzer" })
+    vim.lsp.enable({"clangd", "luals", "markdown", "taplo", "rust-analyzer"})
     vim.api.nvim_create_autocmd("LspAttach", {
-        group = vim.api.nvim_create_augroup("LspConfig", { clear = true }),
+        group = vim.api.nvim_create_augroup("LspConfig", {clear = true}),
         callback = function(ev)
             local bufnr = ev.buf
-            local bufopt = { noremap = true, silent = true, buffer = bufnr }
+            local bufopt = {noremap = true, silent = true, buffer = bufnr}
             local client = vim.lsp.get_client_by_id(ev.data.client_id)
             if client ~= nil then
                 if client:supports_method('textDocument/completion') then
-                    vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
+                    vim.lsp.completion.enable(true, client.id, ev.buf,
+                                              {autotrigger = true})
                 end
                 if client.name == "clangd" then
-                    vim.keymap.set("n", "<leader>hh", ':lua require("rookie_toys.c").toggle_source_header()<CR>', bufopt)
+                    vim.keymap.set("n", "<leader>hh",
+                                   ':lua require("rookie_toys.c").toggle_source_header()<CR>',
+                                   bufopt)
                 end
             end
             vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
@@ -291,21 +312,27 @@ local function setup_lsp()
             vim.keymap.set("n", "gr", vim.lsp.buf.references, bufopt)
             vim.keymap.set("n", "gs", vim.lsp.buf.document_symbol, bufopt)
             vim.keymap.set("n", "gy", vim.lsp.buf.type_definition, bufopt)
-            vim.keymap.set("n", "[d", ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>", bufopt)
-            vim.keymap.set("n", "]d", ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>", bufopt)
-            vim.keymap.set("n", "]D", ":lua vim.diagnostic.setqflist()<CR>", bufopt)
-        end,
+            vim.keymap.set("n", "[d",
+                           ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>",
+                           bufopt)
+            vim.keymap.set("n", "]d",
+                           ":lua vim.diagnostic.jump({ count = 1, float = true })<CR>",
+                           bufopt)
+            vim.keymap.set("n", "]D", ":lua vim.diagnostic.setqflist()<CR>",
+                           bufopt)
+        end
     })
 end
 
 local function setup_usrcmd()
     -- vim.api.nvim_create_user_command('CargoRun', require("rookie_toys.run").cargo_run(), {})
-    local bufopt = { noremap = true, silent = true, buffer = bufnr }
+    local bufopt = {noremap = true, silent = true, buffer = bufnr}
     vim.api.nvim_create_autocmd("FileType", {
         pattern = "qf",
         callback = function()
-            vim.keymap.set("n", "<C-q>", ":call setqflist([])<CR>:cclose<CR>", bufopt)
-        end,
+            vim.keymap.set("n", "<C-q>", ":call setqflist([])<CR>:cclose<CR>",
+                           bufopt)
+        end
     })
 end
 
@@ -324,5 +351,5 @@ return {
     setup_keymap = setup_keymap,
     setup_lsp = setup_lsp,
     setup_misc = setup_misc,
-    setup_option = setup_option,
+    setup_option = setup_option
 }
