@@ -1,7 +1,6 @@
 local M = {}
 
 function M.setup()
-    vim.opt.ambiwidth = "double"
     vim.opt.autoindent = true
     vim.opt.autoread = true
     vim.opt.background = "dark"
@@ -16,15 +15,22 @@ function M.setup()
     vim.opt.cursorline = true
     vim.opt.expandtab = true
     vim.opt.fileformat = "unix"
+    vim.opt.fileencoding = "utf-8"
     vim.opt.formatoptions:append("mB")
     vim.opt.grepformat = "%f:%l:%c:%m,%f:%l:%m"
-    vim.opt.guifont = "Cascadia Code:h9"
-    vim.opt.guioptions:append("k")
-    vim.opt.guioptions:remove("L")
-    vim.opt.guioptions:remove("T")
-    vim.opt.guioptions:remove("e")
-    vim.opt.guioptions:remove("m")
-    vim.opt.guioptions:remove("r")
+
+    if vim.fn.has("gui_running") == 1 then
+        vim.opt.guifont = "Cascadia Code:h9"
+        vim.opt.guioptions:append("k")
+        vim.opt.guioptions:remove("L")
+        vim.opt.guioptions:remove("T")
+        vim.opt.guioptions:remove("e")
+        vim.opt.guioptions:remove("m")
+        vim.opt.guioptions:remove("r")
+        vim.opt.columns = 107
+        vim.opt.lines = 25
+    end
+
     vim.opt.hlsearch = true
     vim.opt.ignorecase = true
     vim.opt.infercase = true
@@ -45,7 +51,7 @@ function M.setup()
     -- vim.opt.relativenumber = true
     vim.opt.sessionoptions:append({ "tabpages", "globals" })
     vim.opt.shiftwidth = 4
-    vim.opt.shortmess = "flnxtocTOI"
+    vim.opt.shortmess = "flnxtocTO"
     vim.opt.signcolumn = "yes"
     vim.opt.smartcase = true
     vim.opt.smarttab = true
@@ -53,11 +59,6 @@ function M.setup()
     vim.opt.softtabstop = 4
     vim.opt.splitbelow = true
     vim.opt.splitright = true
-
-    -- Statusline
-    -- In original, line 55 overwrites line 54 since it's a simple 'set'
-    vim.opt.statusline = "%f:%l:%c %m%r%h%w%q%y [enc=%{&fileencoding}] [%{&ff}]"
-
     vim.opt.tabstop = 4
     vim.opt.termguicolors = true
     vim.opt.textwidth = 100
@@ -69,15 +70,10 @@ function M.setup()
 
     if vim.fn.has("unix") == 1 then
         vim.opt.undodir = vim.fn.expand("$HOME/.vim/undo/")
-        vim.opt.viminfofile = vim.fn.expand("$HOME/.vim/.viminfo")
+        vim.opt.shadafile = vim.fn.expand("$HOME/.vim/main.shada")
     else
         vim.opt.undodir = vim.fn.expand("$HOME/vimfiles/undo/")
-        vim.opt.viminfofile = vim.fn.expand("$HOME/vimfiles/_viminfo")
-    end
-
-    if vim.fn.has("gui_running") == 1 then
-        vim.opt.columns = 107
-        vim.opt.lines = 25
+        vim.opt.shadafile = vim.fn.expand("$HOME/vimfiles/main.shada")
     end
 end
 
