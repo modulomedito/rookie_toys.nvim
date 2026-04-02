@@ -3,7 +3,7 @@ local M = {}
 function M.setup()
     -- Global variable to control enabling keymaps
     -- Default to true if not set (nil), or check explicitly if false
-    if vim.g.rookie_toys_enable_keymap == false then
+    if vim.g.rookie_toys_keymap_enable == false then
         return
     end
 

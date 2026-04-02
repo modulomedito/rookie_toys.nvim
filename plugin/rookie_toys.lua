@@ -1,8 +1,14 @@
 -- Setup default config flags
 require("rookie_toys.rk_default")
 
+-- Setup options
+require("rookie_toys.rk_option").setup()
+
 -- Setup keymaps
 require("rookie_toys.rk_keymap").setup()
+
+-- Register commands
+require("rookie_toys.rk_clangd").register_commands()
 
 -- local c = require("rookie_toys.c")
 -- local git = require("rookie_toys.git")
