@@ -1,12 +1,9 @@
--- Global variables definition
-Rookie_clangd_config = {}
-Rookie_clangd_param = {}
+require("rookie_toys.rk_default")
 
-local function setup()
-    require("rookie_toys.setup").setup()
-end
+-- local function setup()
+--     -- require("rookie_toys.setup").setup()
+-- end
 
-return {
-    setup = setup,
-    -- api = require("rookie_clangd.api"),
-}
+-- return {
+--     setup = setup,
+-- }

@@ -18,14 +18,16 @@
 --     api.choose_preset()
 --     api.generate_compile_commands()
 -- end, {})
--- C
-vim.api.nvim_create_user_command(
-    "RookieToysCToggleSourceHeader",
-    function()
-        c.toggle_source_header()
-    end,
-    {} -- options
-)
+
+-- -- C
+-- vim.api.nvim_create_user_command(
+--     "RookieToysCToggleSourceHeader",
+--     function()
+--         c.toggle_source_header()
+--     end,
+--     {} -- options
+-- )
+
 -- -- Git
 -- vim.api.nvim_create_user_command("RookieToysGitOpenGraph",
 --                                  function() git.open_git_graph_all() end, {})
