@@ -1,9 +1,7 @@
-require("rookie_toys.rk_default")
+local function setup()
 
--- local function setup()
---     -- require("rookie_toys.setup").setup()
--- end
+end
 
--- return {
---     setup = setup,
--- }
+return {
+    setup = setup,
+}

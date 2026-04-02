@@ -1,3 +1,9 @@
+-- Setup default config flags
+require("rookie_toys.rk_default")
+
+-- Setup keymaps
+require("rookie_toys.rk_keymap").setup()
+
 -- local c = require("rookie_toys.c")
 -- local git = require("rookie_toys.git")
 -- local search = require("rookie_toys.search")
