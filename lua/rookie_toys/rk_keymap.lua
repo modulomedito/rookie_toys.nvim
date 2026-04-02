@@ -11,7 +11,7 @@ function M.setup()
     vim.keymap.set(
         "n",
         "<leader>vimrc",
-        "<cmd>e $MYVIMRC<cr>",
+        "<cmd>vs $MYVIMRC<cr>",
         { desc = "Open init.lua" }
     )
 
@@ -19,92 +19,103 @@ function M.setup()
     vim.keymap.set(
         "n",
         "<leader>vimrk",
-        "<cmd>e $MYVIMRC:h/../../nvim-data/lazy/rookie_toys.nvim/plugin/rookie_toys.lua<cr>",
+        "<cmd>vs $MYVIMRC:h/../../nvim-data/lazy/rookie_toys.nvim/plugin/rookie_toys.lua<cr>",
         { desc = "Open rookie_toys.lua" }
     )
 
-    -- vim.g.mapleader = " "
-    -- vim.g.maplocalleader = " "
+    -- Set leader key as space
+    vim.g.mapleader = " "
+    vim.g.maplocalleader = " "
 
-    -- local map = vim.keymap.set
-    -- local opts = { silent = true }
+    -- Command mode
+    vim.keymap.set("c", "<C-v>", "<C-r>*")
 
-    -- -- Command mode
-    -- map("c", "<C-v>", "<C-r>*")
+    -- Normal mode
+    vim.keymap.set("n", "*", "*Nzz")
+    vim.keymap.set("n", "<C-p>", ":find *")
+    vim.keymap.set(
+        "n",
+        "<F2>",
+        ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>"
+    )
+    vim.keymap.set("n", "<M-Down>", ":m .+1<CR>==")
+    vim.keymap.set("n", "<M-Up>", ":m .-2<CR>==")
+    vim.keymap.set("n", "<M-j>", ":m .+1<CR>==")
+    vim.keymap.set("n", "<M-k>", ":m .-2<CR>==")
 
-    -- -- Normal mode
-    -- map("n", "*", "*Nzz")
-    -- map("n", "<C-j>", ":m .+1<CR>==")
-    -- map("n", "<C-k>", ":m .-2<CR>==")
-    -- map("n", "<C-p>", ":find *")
-    -- map("n", "<F2>", ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>")
-    -- map("n", "<M-Down>", ":m .+1<CR>==")
-    -- map("n", "<M-Up>", ":m .-2<CR>==")
-    -- map("n", "<M-i>", ":b<Space><Tab>")
-    -- map("n", "<M-j>", ":m .+1<CR>==")
-    -- map("n", "<M-k>", ":m .-2<CR>==")
-    -- map("n", "<M-u>", ":b<Space><Tab><S-Tab><S-Tab>")
+    -- Normal mode silent mappings
+    vim.keymap.set("n", "+", ":vertical resize +2<CR>", { silent = true })
+    vim.keymap.set("n", "<C-M-PageDown>", ":tabmove +1<CR>", { silent = true })
+    vim.keymap.set("n", "<C-M-PageUp>", ":tabmove -1<CR>", { silent = true })
+    vim.keymap.set("n", "<C-S-Tab>", "gT", { silent = true })
+    vim.keymap.set("n", "<C-S-t>", ":tabnew<CR>", { silent = true })
+    vim.keymap.set("n", "<C-Tab>", "gt", { silent = true })
+    vim.keymap.set("n", "<C-q>", ":q<CR>", { silent = true })
+    vim.keymap.set(
+        "n",
+        "<C-s>",
+        "m6:%s/\\s\\+$//e<Bar>w<CR>`6zz:noh<CR>",
+        { silent = true }
+    )
+    vim.keymap.set("n", "<C-w>i", "gt", { silent = true })
+    vim.keymap.set("n", "<C-w>u", "gT", { silent = true })
+    vim.keymap.set("n", "<F10>", ":cnext<CR>", { silent = true })
+    vim.keymap.set("n", "<F11>", ":cclose<CR>", { silent = true })
+    vim.keymap.set("n", "<F8>", ":copen<CR>", { silent = true })
+    vim.keymap.set("n", "<F9>", ":cprevious<CR>", { silent = true })
+    vim.keymap.set(
+        "n",
+        "<leader>clr",
+        ":%bd<bar>e #<bar>normal `<CR>",
+        { silent = true }
+    )
+    vim.keymap.set("n", "<leader>lh", ":noh<CR>", { silent = true })
+    vim.keymap.set("n", "<leader>vim", ":vs $MYVIMRC<CR>", { silent = true })
+    vim.keymap.set("n", "_", ":vertical resize -2<CR>", { silent = true })
 
-    -- -- Silent mappings
-    -- map("n", "+", ":vertical resize +2<CR>", opts)
-    -- map("n", "<C-M-PageDown>", ":tabmove +1<CR>", opts)
-    -- map("n", "<C-M-PageUp>", ":tabmove -1<CR>", opts)
-    -- map("n", "<C-S-Tab>", "gT", opts)
-    -- map("n", "<C-S-t>", ":tabnew<CR>", opts)
-    -- map("n", "<C-Tab>", "gt", opts)
-    -- map("n", "<C-q>", ":q<CR>", opts)
-    -- map("n", "<C-s>", "m6:%s/\\s\\+$//e<Bar>w<CR>`6zz:noh<CR>", opts)
-    -- map("n", "<C-w>i", "gt", opts)
-    -- map("n", "<C-w>u", "gT", opts)
-    -- map("n", "<F10>", ":cnext<CR>", opts)
-    -- map("n", "<F11>", ":cclose<CR>", opts)
-    -- map("n", "<F8>", ":copen<CR>", opts)
-    -- map("n", "<F9>", ":cprevious<CR>", opts)
-    -- map("n", "<leader>clr", ":%bd<bar>e #<bar>normal `<CR>", opts)
-    -- map("n", "<leader>vim", ":vs $MYVIMRC<CR>", opts)
-    -- map("n", "_", ":vertical resize -2<CR>", opts)
+    vim.keymap.set("n", "K", "i<CR><Esc>")
+    vim.keymap.set("n", "O", "O<Space><BS><Esc>")
+    vim.keymap.set("n", "go", '"0yi):!start <C-r>0<CR>')
+    vim.keymap.set("n", "j", "gj")
+    vim.keymap.set("n", "k", "gk")
+    vim.keymap.set("n", "o", "o<Space><BS><Esc>")
 
-    -- map("n", "K", "i<CR><Esc>")
-    -- map("n", "O", "O<Space><BS><Esc>")
-    -- map("n", "gd", "<C-]>")
-    -- map("n", "go", '"0yi):!start <C-r>0<CR>')
-    -- map("n", "j", "gj")
-    -- map("n", "k", "gk")
-    -- map("n", "o", "o<Space><BS><Esc>")
+    -- Normal, Visual mode
+    vim.keymap.set({ "n", "v" }, "<C-d>", "<C-d>zz", { silent = true })
+    vim.keymap.set({ "n", "v" }, "<C-f>", "<C-u>zz", { silent = true })
 
-    -- -- Noremap (Normal, Visual, Operator-pending)
-    -- map({ "n", "v", "o" }, "<leader>P", '"0P')
-    -- map({ "n", "v", "o" }, "<leader>p", '"0p')
-    -- map({ "n", "v", "o" }, "H", "g^")
-    -- map({ "n", "v", "o" }, "L", "g_")
+    -- Normal, Visual, Operator-pending mode
+    vim.keymap.set({ "n", "v", "o" }, "<leader>P", '"0P')
+    vim.keymap.set({ "n", "v", "o" }, "<leader>p", '"0p')
+    vim.keymap.set({ "n", "v", "o" }, "H", "g^")
+    vim.keymap.set({ "n", "v", "o" }, "L", "g_")
 
-    -- -- Visual mode
-    -- map("v", "/", '"-y/<C-r>-<CR>N')
-    -- map("v", "<C-j>", ":m '><+1<CR>gv=gv")
-    -- map("v", "<C-k>", ":m '<-2<CR>gv=gv")
-    -- map("v", "<F2>", '"-y:%s/<C-r>-\\C/<C-r>-/g<Left><Left>')
-    -- map("v", "<M-Down>", ":m '><+1<CR>gv=gv")
-    -- map("v", "<M-Up>", ":m '<-2<CR>gv=gv")
-    -- map("v", "<M-j>", ":m '><+1<CR>gv=gv")
-    -- map("v", "<M-k>", ":m '<-2<CR>gv=gv")
-    -- map("v", "<leader>ss", ":sort<CR>")
-    -- map("v", "<C-b>", '"-di**<C-r>-**<Esc>', opts)
-    -- map("v", "p", "pgv<Esc>")
-    -- map("v", "y", "ygv<Esc>")
+    -- Visual mode
+    vim.keymap.set("v", "/", '"-y/<C-r>-<CR>N')
+    vim.keymap.set("v", "<C-j>", ":m '><+1<CR>gv=gv")
+    vim.keymap.set("v", "<C-k>", ":m '<-2<CR>gv=gv")
+    vim.keymap.set("v", "<F2>", '"-y:%s/<C-r>-\\C/<C-r>-/g<Left><Left>')
+    vim.keymap.set("v", "<M-Down>", ":m '><+1<CR>gv=gv")
+    vim.keymap.set("v", "<M-Up>", ":m '<-2<CR>gv=gv")
+    vim.keymap.set("v", "<M-j>", ":m '><+1<CR>gv=gv")
+    vim.keymap.set("v", "<M-k>", ":m '<-2<CR>gv=gv")
+    vim.keymap.set("v", "<leader>ss", ":sort<CR>")
+    vim.keymap.set("v", "<C-b>", '"-di**<C-r>-**<Esc>', { silent = true })
+    vim.keymap.set("v", "y", "ygv<Esc>")
 
-    -- -- Git obs mapping
-    -- map("n", "<leader>obs", function()
-    --     vim.cmd("wa")
-    --     vim.cmd("silent !git pull")
-    --     vim.cmd("silent !git add .")
-    --     vim.cmd('silent !git commit -m "update by vim"')
-    --     vim.cmd("silent !git push")
-    --     vim.cmd("G fetch")
-    --     vim.fn.timer_start(1500, function()
-    --         vim.cmd("RookieGitGraph")
-    --     end)
-    --     vim.cmd("G")
-    -- end, opts)
+    -- Select mode
+    vim.keymap.set("x", "p", '"_dP')
+
+    -- Git obs mapping
+    vim.keymap.set("n", "<leader>obs", function()
+        vim.cmd("wa")
+        vim.cmd("silent !git pull")
+        vim.cmd("silent !git add .")
+        vim.cmd('silent !git commit -m "update by vim"')
+        vim.cmd("silent !git push")
+        vim.cmd("silent !git fetch")
+        vim.cmd("!git log --oneline --graph --all --decorate")
+    end, { silent = true })
 end
 
 return M
