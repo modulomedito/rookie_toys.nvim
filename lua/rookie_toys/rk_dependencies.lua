@@ -5,6 +5,7 @@
 --       'nvim-tree/nvim-tree.lua',
 --       'isakbm/gitgraph.nvim',
 --       'sindrets/diffview.nvim',
+--       'azabiong/vim-highlighter',
 --     },
 --   },
 
@@ -14,6 +15,7 @@ function M.setup()
     require("rookie_toys.dependencies.nvim-tree").setup()
     require("rookie_toys.dependencies.telescope").setup()
     require("rookie_toys.dependencies.gitgraph").setup()
+    require("rookie_toys.dependencies.conform").setup()
 end
 
 return M
