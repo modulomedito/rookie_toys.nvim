@@ -165,6 +165,10 @@ function M.setup()
         silent = true,
         desc = "Smooth scroll half page up",
     })
+    vim.keymap.set("n", "<C-u>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
+        silent = true,
+        desc = "Smooth scroll half page up",
+    })
 
     -- Visual mode mappings
     vim.keymap.set("v", "<C-d>", "<cmd>RookieSmoothScrollHalfPageDown<CR>", {
@@ -172,6 +176,10 @@ function M.setup()
         desc = "Smooth scroll half page down",
     })
     vim.keymap.set("v", "<C-f>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
+        silent = true,
+        desc = "Smooth scroll half page up",
+    })
+    vim.keymap.set("v", "<C-u>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
         silent = true,
         desc = "Smooth scroll half page up",
     })
