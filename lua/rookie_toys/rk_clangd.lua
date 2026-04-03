@@ -1,21 +1,5 @@
 local M = {}
 
--- Default configuration
-local function set_defaults()
-    if vim.g.rookie_toys_clangd_source_patterns == nil then
-        vim.g.rookie_toys_clangd_source_patterns = { "c", "cpp" }
-    end
-    if vim.g.rookie_toys_clangd_header_patterns == nil then
-        vim.g.rookie_toys_clangd_header_patterns = { "h", "hpp" }
-    end
-    if vim.g.rookie_toys_clangd_compiler == nil then
-        vim.g.rookie_toys_clangd_compiler = "gcc"
-    end
-    if vim.g.rookie_toys_clangd_args == nil then
-        vim.g.rookie_toys_clangd_args = { "-ferror-limit=3000" }
-    end
-end
-
 -- Search and collect files matching patterns recursively
 local function search_and_collect(dir, patterns)
     local result = {}
@@ -72,7 +56,6 @@ end
 
 -- Main function to create compile_commands.json
 function M.create_compile_commands_json()
-    set_defaults()
     local current_dir = vim.fn.getcwd():gsub("\\", "/")
 
     -- Search header parent folders
@@ -132,8 +115,26 @@ function M.create_compile_commands_json()
     print("Created compile_commands.json")
 end
 
+-- Default configuration
+local function set_defaults()
+    if vim.g.rookie_toys_clangd_source_patterns == nil then
+        vim.g.rookie_toys_clangd_source_patterns = { "c", "cpp" }
+    end
+    if vim.g.rookie_toys_clangd_header_patterns == nil then
+        vim.g.rookie_toys_clangd_header_patterns = { "h", "hpp" }
+    end
+    if vim.g.rookie_toys_clangd_compiler == nil then
+        vim.g.rookie_toys_clangd_compiler = "gcc"
+    end
+    if vim.g.rookie_toys_clangd_args == nil then
+        vim.g.rookie_toys_clangd_args = { "-ferror-limit=3000" }
+    end
+end
+
 -- Register commands
-function M.register_commands()
+function M.setup()
+    set_defaults()
+
     -- RkClangdGenerate
     vim.api.nvim_create_user_command("RkClangdGenerate", function()
         M.create_compile_commands_json()
