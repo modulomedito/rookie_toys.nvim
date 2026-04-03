@@ -139,6 +139,11 @@ function M.setup()
     vim.api.nvim_create_user_command("RkClangdGenerate", function()
         M.create_compile_commands_json()
     end, { desc = "Generate compile_commands.json for clangd" })
+
+    -- CC as alias for RkClangdGenerate
+    vim.api.nvim_create_user_command("CC", function()
+        M.create_compile_commands_json()
+    end, { desc = "Alias for RkClangdGenerate" })
 end
 
 return M
