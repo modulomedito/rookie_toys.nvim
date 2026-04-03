@@ -15,6 +15,7 @@ require("rookie_toys.rk_clangd").setup()
 require("rookie_toys.rk_project").setup()
 require("rookie_toys.rk_smooth").setup()
 require("rookie_toys.rk_crc").setup()
+require("rookie_toys.rk_hex").setup()
 
 -- local c = require("rookie_toys.c")
 -- local git = require("rookie_toys.git")
