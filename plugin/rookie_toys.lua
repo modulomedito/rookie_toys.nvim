@@ -17,6 +17,7 @@ require("rookie_toys.rk_smooth").setup()
 require("rookie_toys.rk_crc").setup()
 require("rookie_toys.rk_hex").setup()
 require("rookie_toys.rk_retab").setup()
+require("rookie_toys.rk_gitdiff").setup()
 
 -- local c = require("rookie_toys.c")
 -- local git = require("rookie_toys.git")
