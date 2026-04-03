@@ -22,7 +22,7 @@ local function ensure_info_file()
         end
         vim.fn.writefile({}, f)
         vim.api.nvim_echo(
-            { { "Projects does not exist, please add one.", "WarningMsg" } },
+            { { "\nProjects does not exist, please add one.", "WarningMsg" } },
             true,
             {}
         )
@@ -199,7 +199,7 @@ function M.project_add()
         end
         write_projects(out)
         vim.api.nvim_echo(
-            { { "Project " .. name .. " updated to " .. path, "None" } },
+            { { "\nProject " .. name .. " updated to " .. path, "None" } },
             true,
             {}
         )
@@ -240,7 +240,7 @@ function M.project_remove()
 
     write_projects(out)
     vim.api.nvim_echo(
-        { { "Project " .. prj.name .. " removed.", "None" } },
+        { { "\nProject " .. prj.name .. " removed.", "None" } },
         true,
         {}
     )
