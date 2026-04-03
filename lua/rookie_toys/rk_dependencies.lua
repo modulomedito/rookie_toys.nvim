@@ -7,6 +7,7 @@ local M = {}
 
 function M.setup()
     require("rookie_toys.dependencies.nvim-tree").setup()
+    require("rookie_toys.dependencies.telescope").setup()
 end
 
 return M
