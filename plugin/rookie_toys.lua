@@ -7,6 +7,9 @@ require("rookie_toys.rk_option").setup()
 -- Setup keymaps
 require("rookie_toys.rk_keymap").setup()
 
+-- Setup dependencies
+require("rookie_toys.rk_dependencies").setup()
+
 -- Features setups
 require("rookie_toys.rk_clangd").setup()
 

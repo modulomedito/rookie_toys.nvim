@@ -31,7 +31,8 @@ function M.setup()
     vim.keymap.set("c", "<C-v>", "<C-r>*")
 
     -- Normal mode
-    vim.keymap.set("n", "*", "*Nzz")
+    -- vim.keymap.set("n", "*", "*Nzz")
+    vim.keymap.set("n", "*", "*zz") -- kickstart.nvim refinement
     vim.keymap.set("n", "<C-p>", ":find *")
     vim.keymap.set(
         "n",
