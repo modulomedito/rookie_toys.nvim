@@ -209,7 +209,7 @@ function M.project_add()
     table.insert(projects, { name = name, path = path })
     write_projects(projects)
     vim.api.nvim_echo(
-        { { "Project " .. name .. " added at " .. path, "None" } },
+        { { "\nProject " .. name .. " added at " .. path, "None" } },
         true,
         {}
     )
