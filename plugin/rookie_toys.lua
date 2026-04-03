@@ -18,6 +18,7 @@ require("rookie_toys.rk_crc").setup()
 require("rookie_toys.rk_hex").setup()
 require("rookie_toys.rk_retab").setup()
 require("rookie_toys.rk_gitdiff").setup()
+require("rookie_toys.rk_tabrename").setup()
 
 -- local c = require("rookie_toys.c")
 -- local git = require("rookie_toys.git")
