@@ -300,9 +300,10 @@ local function my_on_attach(bufnr)
                 path = vim.fn.fnamemodify(path, ":h")
             end
             vim.cmd("cd " .. vim.fn.fnameescape(path))
-            print("CWD changed to: " .. path)
+            api.tree.change_root(path)
+            print("CWD and nvim-tree root changed to: " .. path)
         end
-    end, opts("Change CWD to node"))
+    end, opts("Change CWD and nvim-tree root to node"))
 
     vim.keymap.set("n", "mc", copy_node_path, opts("Copy node path"))
     vim.keymap.set(
