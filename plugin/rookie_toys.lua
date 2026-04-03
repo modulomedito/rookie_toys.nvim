@@ -11,6 +11,7 @@ require("rookie_toys.rk_keymap").setup()
 require("rookie_toys.rk_dependencies").setup()
 
 -- Features setups
+require("rookie_toys.rk_lsp").setup()
 require("rookie_toys.rk_clangd").setup()
 require("rookie_toys.rk_project").setup()
 require("rookie_toys.rk_smooth").setup()
