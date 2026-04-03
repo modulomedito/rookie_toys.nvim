@@ -11,7 +11,7 @@ local function search_and_collect(dir, patterns)
     end
 
     -- Get all files recursively using globpath with the '**' wildcard
-    local files = vim.fn.globpath(dir, "**", 0, 1)
+    local files = vim.fn.globpath(dir, "**", false, true)
     for _, file in ipairs(files) do
         -- Skip directories – process only files
         if vim.fn.isdirectory(file) == 0 then
