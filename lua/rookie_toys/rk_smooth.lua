@@ -138,6 +138,11 @@ function M.page_up()
 end
 
 function M.setup()
+    -- Global variable to control enabling smooth scroll keymaps
+    if vim.g.rookie_toys_smooth_scroll_enable == false then
+        return
+    end
+
     -- Register commands
     vim.api.nvim_create_user_command(
         "RookieSmoothScrollHalfPageDown",
@@ -153,24 +158,20 @@ function M.setup()
 
     -- Normal mode mappings
     vim.keymap.set("n", "<C-d>", "<cmd>RookieSmoothScrollHalfPageDown<CR>", {
-        unique = true,
         silent = true,
         desc = "Smooth scroll half page down",
     })
     vim.keymap.set("n", "<C-f>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
-        unique = true,
         silent = true,
         desc = "Smooth scroll half page up",
     })
 
     -- Visual mode mappings
     vim.keymap.set("v", "<C-d>", "<cmd>RookieSmoothScrollHalfPageDown<CR>", {
-        unique = true,
         silent = true,
         desc = "Smooth scroll half page down",
     })
     vim.keymap.set("v", "<C-f>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
-        unique = true,
         silent = true,
         desc = "Smooth scroll half page up",
     })
