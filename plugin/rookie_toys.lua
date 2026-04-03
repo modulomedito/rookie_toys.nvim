@@ -13,6 +13,7 @@ require("rookie_toys.rk_dependencies").setup()
 -- Features setups
 require("rookie_toys.rk_clangd").setup()
 require("rookie_toys.rk_project").setup()
+require("rookie_toys.rk_smooth").setup()
 
 -- local c = require("rookie_toys.c")
 -- local git = require("rookie_toys.git")
