@@ -7,7 +7,7 @@
 --       'isakbm/gitgraph.nvim', -- Git graph visualization
 --       'sindrets/diffview.nvim', -- Git diff view
 --       'azabiong/vim-highlighter', -- Highlight words/patterns
---       'tpope/vim-fugitive', -- Git wrapper
+--       'NeogitOrg/neogit', -- Git wrapper
 --     },
 --   },
 
