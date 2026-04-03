@@ -67,9 +67,18 @@ end
 
 local function set_quickfix(projects)
     local w = name_width(projects)
+    local idx_w = string.len(tostring(#projects))
+    if idx_w < 2 then
+        idx_w = 2
+    end
     local qf = {}
     for idx, p in ipairs(projects) do
-        local text = string.format("%-" .. w .. "s | %s", p.name, p.path)
+        local text = string.format(
+            "%0" .. idx_w .. "d | %-" .. w .. "s | %s",
+            idx,
+            p.name,
+            p.path
+        )
         table.insert(qf, { lnum = idx, text = text })
     end
     vim.fn.setqflist(qf, "r")
