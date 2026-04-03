@@ -1,7 +1,12 @@
 -- Dependencies list that add to lazy.nvim
--- dependencies = {
---     "nvim-tree/nvim-tree.lua",
--- }
+--   {
+--     'modulomedito/rookie_toys.nvim', -- Line break for dependencies
+--     dependencies = {
+--       'nvim-tree/nvim-tree.lua',
+--       'isakbm/gitgraph.nvim',
+--       'sindrets/diffview.nvim',
+--     },
+--   },
 
 local M = {}
 
