@@ -59,15 +59,17 @@ function M.jump_to_change()
 end
 
 function M.setup()
-    vim.keymap.set(
-        "n",
-        "<leader>jd",
-        "<Cmd>lua M.jump_to_change() <CR>",
-        true,
+    vim.api.nvim_create_user_command(
+        "RkGitdiffJumpToChange",
+        M.jump_to_change,
         {
-            desc = "Jump to the first differing column in the current line between diff windows",
+            desc = "Jump to the first differing column in diff windows",
         }
     )
+
+    vim.keymap.set("n", "<leader>jd", M.jump_to_change, {
+        desc = "Jump to the first differing column in diff windows",
+    })
 end
 
 return M
