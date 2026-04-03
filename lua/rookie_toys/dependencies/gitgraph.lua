@@ -7,7 +7,7 @@ function M.setup()
             commit = "*",
         },
         format = {
-            timestamp = "%H:%M:%S %d-%m-%Y",
+            timestamp = "%Y-%m-%d %H:%M:%S",
             fields = { "hash", "timestamp", "author", "branch_name", "tag" },
         },
         hooks = {
