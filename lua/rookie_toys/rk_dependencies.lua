@@ -2,6 +2,7 @@
 --   {
 --     'modulomedito/rookie_toys.nvim', -- Line break for dependencies
 --     dependencies = {
+--       'neovim/nvim-lspconfig',
 --       'nvim-tree/nvim-tree.lua',
 --       'isakbm/gitgraph.nvim',
 --       'sindrets/diffview.nvim',
