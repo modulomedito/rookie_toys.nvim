@@ -6,10 +6,9 @@ function M.setup()
         return
     end
 
-    -- Setup clangd
-    if vim.lsp.config then
-        -- Neovim 0.11+ style
-        vim.lsp.config("clangd", {
+    -- LSP Server list pattern similar to kickstart.nvim
+    local servers = {
+        clangd = {
             cmd = {
                 "clangd",
                 "--background-index",
@@ -24,27 +23,26 @@ function M.setup()
                 completeUnimported = true,
                 clangdFileStatus = true,
             },
-        })
+        },
+        pyright = {},
+        rust_analyzer = {},
+        -- Add more servers here
+    }
+
+    -- Setup servers
+    if vim.lsp.config then
+        -- Neovim 0.11+ style
+        for server_name, config in pairs(servers) do
+            vim.lsp.config(server_name, config)
+            vim.lsp.enable(server_name)
+        end
     else
         -- Fallback for older Neovim versions using nvim-lspconfig
         local ok, lspconfig = pcall(require, "lspconfig")
         if ok then
-            lspconfig.clangd.setup({
-                cmd = {
-                    "clangd",
-                    "--background-index",
-                    "--clang-tidy",
-                    "--header-insertion=iwyu",
-                    "--completion-style=detailed",
-                    "--function-arg-placeholders",
-                    "--fallback-style=llvm",
-                },
-                init_options = {
-                    usePlaceholders = true,
-                    completeUnimported = true,
-                    clangdFileStatus = true,
-                },
-            })
+            for server_name, config in pairs(servers) do
+                lspconfig[server_name].setup(config)
+            end
         end
     end
 
@@ -86,26 +84,31 @@ function M.setup()
                 "n",
                 "gD",
                 vim.lsp.buf.declaration,
-                { desc = "LSP: [G]oto [D]eclaration", buffer = ev.buf }
+                { desc = "LSP: Goto [D]eclaration", buffer = ev.buf }
             )
             vim.keymap.set(
                 "n",
                 "gd",
                 vim.lsp.buf.definition,
-                { desc = "LSP: [G]oto [D]efinition", buffer = ev.buf }
+                { desc = "LSP: Goto [d]efinition", buffer = ev.buf }
             )
-            -- vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "LSP: Hover documentation", buffer = ev.buf })
+            vim.keymap.set(
+                "n",
+                "gh",
+                vim.lsp.buf.hover,
+                { desc = "LSP: [H]over documentation", buffer = ev.buf }
+            )
             vim.keymap.set(
                 "n",
                 "gi",
                 vim.lsp.buf.implementation,
-                { desc = "LSP: [G]oto [I]mplementation", buffer = ev.buf }
+                { desc = "LSP: Goto [i]mplementation", buffer = ev.buf }
             )
             vim.keymap.set(
                 "n",
-                "<C-k>",
+                "gS",
                 vim.lsp.buf.signature_help,
-                { desc = "LSP: Signature help", buffer = ev.buf }
+                { desc = "LSP: [S]ignature help", buffer = ev.buf }
             )
             vim.keymap.set(
                 "n",
