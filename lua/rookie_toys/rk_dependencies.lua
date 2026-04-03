@@ -2,11 +2,12 @@
 --   {
 --     'modulomedito/rookie_toys.nvim', -- Line break for dependencies
 --     dependencies = {
---       'neovim/nvim-lspconfig',
---       'nvim-tree/nvim-tree.lua',
---       'isakbm/gitgraph.nvim',
---       'sindrets/diffview.nvim',
---       'azabiong/vim-highlighter',
+--       'neovim/nvim-lspconfig', -- Quickstart configs for Nvim LSP
+--       'nvim-tree/nvim-tree.lua', -- File explorer
+--       'isakbm/gitgraph.nvim', -- Git graph visualization
+--       'sindrets/diffview.nvim', -- Git diff view
+--       'azabiong/vim-highlighter', -- Highlight words/patterns
+--       'tpope/vim-fugitive', -- Git wrapper
 --     },
 --   },
 
