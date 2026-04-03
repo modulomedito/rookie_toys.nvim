@@ -6,10 +6,10 @@ function M.setup()
         return
     end
 
-    -- Setup lspconfig for clangd
-    local ok, lspconfig = pcall(require, "lspconfig")
-    if ok then
-        lspconfig.clangd.setup({
+    -- Setup clangd
+    if vim.lsp.config then
+        -- Neovim 0.11+ style
+        vim.lsp.config("clangd", {
             cmd = {
                 "clangd",
                 "--background-index",
@@ -25,6 +25,27 @@ function M.setup()
                 clangdFileStatus = true,
             },
         })
+    else
+        -- Fallback for older Neovim versions using nvim-lspconfig
+        local ok, lspconfig = pcall(require, "lspconfig")
+        if ok then
+            lspconfig.clangd.setup({
+                cmd = {
+                    "clangd",
+                    "--background-index",
+                    "--clang-tidy",
+                    "--header-insertion=iwyu",
+                    "--completion-style=detailed",
+                    "--function-arg-placeholders",
+                    "--fallback-style=llvm",
+                },
+                init_options = {
+                    usePlaceholders = true,
+                    completeUnimported = true,
+                    clangdFileStatus = true,
+                },
+            })
+        end
     end
 
     -- Global mappings
