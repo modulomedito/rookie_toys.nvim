@@ -109,6 +109,36 @@ local function apply_global_replace(search_text, replace_text)
     end
 end
 
+local function global_replace_undo()
+    local qf = vim.fn.getqflist({ title = 1, size = 1 })
+    local qf_title = qf.title
+    local qf_size = qf.size
+
+    if
+        type(qf_title) ~= "string" or not string.match(qf_title, "^Replace:")
+    then
+        print(
+            "The current quickfix list does not contain a Global Replace result."
+        )
+        return
+    end
+
+    if qf_size == 0 then
+        print("No files in the replace quickfix list to undo.")
+        return
+    end
+
+    local confirm = vim.fn.input(
+        "Undo '" .. qf_title .. "' across " .. qf_size .. " matches? (y/n): "
+    )
+    if confirm:lower() == "y" then
+        vim.cmd("cfdo silent! undo | update")
+        print("Global replace undone.")
+    else
+        print("Undo canceled.")
+    end
+end
+
 local function live_grep_with_flags(default_text, is_replace)
     local builtin = require("telescope.builtin")
     local actions = require("telescope.actions")
@@ -197,6 +227,10 @@ function M.setup()
         live_grep_with_flags(nil, true)
     end, { desc = "Global Replace with togglable VS Code like flags" })
 
+    vim.api.nvim_create_user_command("RkGlobalReplaceUndo", function()
+        global_replace_undo()
+    end, { desc = "Undo the last Global Replace operation" })
+
     -- Map <leader>sg to RkLiveGrep
     vim.keymap.set(
         "n",
@@ -211,6 +245,14 @@ function M.setup()
         "<leader><F2>",
         "<cmd>RkGlobalReplace<CR>",
         { desc = "Rookie Global Replace (enhance telescope)" }
+    )
+
+    -- Map <leader><leader><F2> to RkGlobalReplaceUndo
+    vim.keymap.set(
+        "n",
+        "<leader><leader><F2>",
+        "<cmd>RkGlobalReplaceUndo<CR>",
+        { desc = "Rookie Global Replace Undo" }
     )
 end
 
