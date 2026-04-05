@@ -2,12 +2,13 @@
 --   {
 --     'modulomedito/rookie_toys.nvim', -- Line break for dependencies
 --     dependencies = {
+--       'azabiong/vim-highlighter', -- Highlight words/patterns
+--       'fedorenchik/VimCalc3', -- Vim calculator
+--       'isakbm/gitgraph.nvim', -- Git graph visualization
+--       'NeogitOrg/neogit', -- Git wrapper
 --       'neovim/nvim-lspconfig', -- Quickstart configs for Nvim LSP
 --       'nvim-tree/nvim-tree.lua', -- File explorer
---       'isakbm/gitgraph.nvim', -- Git graph visualization
 --       'sindrets/diffview.nvim', -- Git diff view
---       'azabiong/vim-highlighter', -- Highlight words/patterns
---       'NeogitOrg/neogit', -- Git wrapper
 --     },
 --   },
 
