@@ -9,6 +9,7 @@
 --       'neovim/nvim-lspconfig', -- Quickstart configs for Nvim LSP
 --       'nvim-tree/nvim-tree.lua', -- File explorer
 --       'sindrets/diffview.nvim', -- Git diff view
+--       'hotoo/pangu.vim', -- Pangu spacing
 --     },
 --   },
 

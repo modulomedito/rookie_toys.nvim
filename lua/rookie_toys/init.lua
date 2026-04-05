@@ -1,7 +1,7 @@
-local function setup()
+local M = {}
+
+function M.setup()
 
 end
 
-return {
-    setup = setup,
-}
+return M
