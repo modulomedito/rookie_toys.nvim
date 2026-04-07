@@ -54,22 +54,13 @@ function M.setup()
     local group_c = vim.api.nvim_create_augroup("RkC", { clear = true })
     vim.api.nvim_create_autocmd("FileType", {
         group = group_c,
-        pattern = "c",
+        pattern = { "c", "cpp" },
         callback = function()
             vim.opt_local.tabstop = 4
             vim.opt_local.shiftwidth = 4
             vim.opt_local.expandtab = true
-        end,
-    })
-
-    local group_cpp = vim.api.nvim_create_augroup("RkCpp", { clear = true })
-    vim.api.nvim_create_autocmd("FileType", {
-        group = group_cpp,
-        pattern = "cpp",
-        callback = function()
-            vim.opt_local.tabstop = 4
-            vim.opt_local.shiftwidth = 4
-            vim.opt_local.expandtab = true
+            vim.opt_local.cindent = true -- Explicitly use standard C indentation
+            vim.opt_local.indentexpr = "" -- Disable Treesitter's indent engine for C
         end,
     })
 end
