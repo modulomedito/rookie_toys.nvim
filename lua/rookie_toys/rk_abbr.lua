@@ -1,0 +1,33 @@
+local M = {}
+
+function M.setup()
+    -- Insert abbreviations
+    vim.cmd([[
+        iabbrev xbar <C-R>=repeat('-',80)<CR><Esc>0
+        iabbrev xbui 🔧 build():[#]<Left><Left><Left><Left>
+        iabbrev xcho 🐳 chore():[#]<Left><Left><Left><Left>
+        iabbrev xdoc 📃 docs():[#]<Left><Left><Left><Left>
+        iabbrev xfea ✨ feat():[#]<Left><Left><Left><Left>
+    ]])
+
+    -- Command abbreviations
+    vim.cmd([[
+        cabbrev Gc silent G checkout <C-r><C-w>\|RkGitGraph
+        cabbrev Gcherry G cherry-pick <C-r><C-w>\|RkGitGraph
+        cabbrev Gclr G clean -d -f
+        cabbrev Gdell silent G branch -d\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+        cabbrev Gdelr silent G push origin --delete\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+        cabbrev Gf silent G fetch\|RkGitGraph
+        cabbrev Gg call timer_start(200, {-> execute('RkGitGraph')})\|G
+        cabbrev Gm silent G merge --ff <C-r><C-w>\|RkGitGraph
+        cabbrev Gnew silent G checkout -b\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+        cabbrev Gpl silent G pull\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+        cabbrev Gps G push\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+        cabbrev Gr G rebase <C-r><C-w>\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+        cabbrev Gstashpo silent G stash pop\|RkGitGraph
+        cabbrev Gstashpu silent G stash push --include-untracked\|RkGitGraph
+        cabbrev Gtag silent G tag\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+    ]])
+end
+
+return M
