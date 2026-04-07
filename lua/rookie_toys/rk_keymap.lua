@@ -55,13 +55,16 @@ function M.setup()
     vim.keymap.set("n", "<C-S-Tab>", "gT", {
         silent = true,
     })
-    vim.keymap.set("n", "<C-S-t>", ":tabnew<CR>", {
+    vim.keymap.set("n", "<C-t>", ":tabnew<CR>", {
         silent = true,
     })
     vim.keymap.set("n", "<C-Tab>", "gt", {
         silent = true,
     })
     vim.keymap.set("n", "<C-q>", ":q<CR>", {
+        silent = true,
+    })
+    vim.keymap.set("n", "<leader><C-q>", ":tabclose<CR>", {
         silent = true,
     })
     vim.keymap.set(
