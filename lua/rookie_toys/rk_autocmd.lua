@@ -33,7 +33,7 @@ function M.setup()
 
     vim.api.nvim_create_autocmd("FileType", {
         group = group,
-        pattern = "git",
+        pattern = "gitgraph",
         callback = function()
             -- setlocal iskeyword+=- iskeyword+=/
             vim.opt_local.iskeyword:append("-")
