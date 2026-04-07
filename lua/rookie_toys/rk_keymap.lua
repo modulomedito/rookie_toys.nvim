@@ -39,8 +39,8 @@ function M.setup()
     )
     vim.keymap.set("n", "<M-Down>", ":m .+1<CR>==")
     vim.keymap.set("n", "<M-Up>", ":m .-2<CR>==")
-    vim.keymap.set("n", "<M-j>", ":m .+1<CR>==")
-    vim.keymap.set("n", "<M-k>", ":m .-2<CR>==")
+    vim.keymap.set("n", "<M-j>", ":m .+1<CR>==", { silent = true })
+    vim.keymap.set("n", "<M-k>", ":m .-2<CR>==", { silent = true })
 
     -- Normal mode silent mappings
     vim.keymap.set("n", "+", ":vertical resize +2<CR>", {
@@ -134,8 +134,8 @@ function M.setup()
     vim.keymap.set("v", "<F2>", '"-y:%s/<C-r>-\\C/<C-r>-/g<Left><Left>')
     vim.keymap.set("v", "<M-Down>", ":m '><+1<CR>gv=gv")
     vim.keymap.set("v", "<M-Up>", ":m '<-2<CR>gv=gv")
-    vim.keymap.set("v", "<M-j>", ":m '><+1<CR>gv=gv")
-    vim.keymap.set("v", "<M-k>", ":m '<-2<CR>gv=gv")
+    vim.keymap.set("v", "<M-j>", ":m '><+1<CR>gv=gv", { silent = true })
+    vim.keymap.set("v", "<M-k>", ":m '<-2<CR>gv=gv", { silent = true })
     vim.keymap.set("v", "<leader>ss", ":sort<CR>")
     vim.keymap.set("v", "<C-b>", '"-di**<C-r>-**<Esc>', {
         silent = true,
