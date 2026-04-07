@@ -120,6 +120,14 @@ function M.setup()
     vim.keymap.set({ "n", "v" }, "<C-f>", "<C-u>zz", {
         silent = true,
     })
+    vim.keymap.set(
+        { "n", "v" },
+        "<M-S-f>",
+        "<cmd>lua vim.lsp.buf.format()<CR><cmd>w<CR><Esc>",
+        {
+            silent = true,
+        }
+    )
 
     -- Normal, Visual, Operator-pending mode
     vim.keymap.set({ "n", "v", "o" }, "<leader>P", '"0P')
