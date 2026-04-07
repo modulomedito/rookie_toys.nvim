@@ -26,6 +26,8 @@ function M.setup()
         },
         pyright = {},
         rust_analyzer = {},
+        lua_ls = {},
+        jsonls = {},
         -- Add more servers here
     }
 

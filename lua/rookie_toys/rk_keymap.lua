@@ -9,15 +9,16 @@ function M.setup()
 
     -- Edit init.lua quickly
     vim.keymap.set("n", "<leader>vimrc", "<cmd>vs $MYVIMRC<cr>", {
-        desc = "Open init.lua"
+        desc = "Open init.lua",
     })
 
     -- Edit this plugin quickly
     vim.keymap.set("n", "<leader>vimrk", function()
-        local path = vim.fn.stdpath("data") .. "/lazy/rookie_toys.nvim/plugin/rookie_toys.lua"
+        local path = vim.fn.stdpath("data")
+            .. "/lazy/rookie_toys.nvim/plugin/rookie_toys.lua"
         vim.cmd("vs " .. path)
     end, {
-        desc = "Open rookie_toys.lua"
+        desc = "Open rookie_toys.lua",
     })
 
     -- Set leader key as space
@@ -31,7 +32,11 @@ function M.setup()
     -- vim.keymap.set("n", "*", "*Nzz")
     vim.keymap.set("n", "*", "*zz") -- kickstart.nvim refinement
     vim.keymap.set("n", "<C-p>", ":find *")
-    vim.keymap.set("n", "<F2>", ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>")
+    vim.keymap.set(
+        "n",
+        "<F2>",
+        ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>"
+    )
     vim.keymap.set("n", "<M-Down>", ":m .+1<CR>==")
     vim.keymap.set("n", "<M-Up>", ":m .-2<CR>==")
     vim.keymap.set("n", "<M-j>", ":m .+1<CR>==")
@@ -39,58 +44,63 @@ function M.setup()
 
     -- Normal mode silent mappings
     vim.keymap.set("n", "+", ":vertical resize +2<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<C-M-PageDown>", ":tabmove +1<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<C-M-PageUp>", ":tabmove -1<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<C-S-Tab>", "gT", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<C-S-t>", ":tabnew<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<C-Tab>", "gt", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<C-q>", ":q<CR>", {
-        silent = true
+        silent = true,
     })
-    vim.keymap.set("n", "<C-s>", "m6:%s/\\s\\+$//e<Bar>w<CR>`6zz:noh<CR>", {
-        silent = true
-    })
+    vim.keymap.set(
+        "n",
+        "<C-s>",
+        "m6:%s/\\s\\+$//e<Bar>:lua vim.lsp.buf.format()<CR><Bar>w<CR>`6zz:noh<CR>",
+        {
+            silent = true,
+        }
+    )
     vim.keymap.set("n", "<C-w>i", "gt", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<C-w>u", "gT", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<F10>", ":cnext<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<F11>", ":cclose<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<F8>", ":copen<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<F9>", ":cprevious<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<leader>clr", ":%bd<bar>e #<bar>normal `<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<leader>lh", ":noh<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "<leader>vim", ":vs $MYVIMRC<CR>", {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("n", "_", ":vertical resize -2<CR>", {
-        silent = true
+        silent = true,
     })
 
     vim.keymap.set("n", "K", "i<CR><Esc>")
@@ -101,18 +111,18 @@ function M.setup()
     vim.keymap.set("n", "o", "o<Space><BS><Esc>")
 
     -- Normal, Visual mode
-    vim.keymap.set({"n", "v"}, "<C-d>", "<C-d>zz", {
-        silent = true
+    vim.keymap.set({ "n", "v" }, "<C-d>", "<C-d>zz", {
+        silent = true,
     })
-    vim.keymap.set({"n", "v"}, "<C-f>", "<C-u>zz", {
-        silent = true
+    vim.keymap.set({ "n", "v" }, "<C-f>", "<C-u>zz", {
+        silent = true,
     })
 
     -- Normal, Visual, Operator-pending mode
-    vim.keymap.set({"n", "v", "o"}, "<leader>P", '"0P')
-    vim.keymap.set({"n", "v", "o"}, "<leader>p", '"0p')
-    vim.keymap.set({"n", "v", "o"}, "H", "g^")
-    vim.keymap.set({"n", "v", "o"}, "L", "g_")
+    vim.keymap.set({ "n", "v", "o" }, "<leader>P", '"0P')
+    vim.keymap.set({ "n", "v", "o" }, "<leader>p", '"0p')
+    vim.keymap.set({ "n", "v", "o" }, "H", "g^")
+    vim.keymap.set({ "n", "v", "o" }, "L", "g_")
 
     -- Visual mode
     vim.keymap.set("v", "/", '"-y/<C-r>-<CR>N')
@@ -125,7 +135,7 @@ function M.setup()
     vim.keymap.set("v", "<M-k>", ":m '<-2<CR>gv=gv")
     vim.keymap.set("v", "<leader>ss", ":sort<CR>")
     vim.keymap.set("v", "<C-b>", '"-di**<C-r>-**<Esc>', {
-        silent = true
+        silent = true,
     })
     vim.keymap.set("v", "y", "ygv<Esc>")
 
@@ -142,7 +152,7 @@ function M.setup()
         vim.cmd("silent !git fetch")
         vim.cmd("!git log --oneline --graph --all --decorate")
     end, {
-        silent = true
+        silent = true,
     })
 end
 
