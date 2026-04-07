@@ -305,23 +305,33 @@ local function my_on_attach(bufnr)
         end
     end, opts("Change CWD and nvim-tree root to node"))
 
-    vim.keymap.set("n", "mc", copy_node_path, opts("Copy node path"))
     vim.keymap.set(
         "n",
-        "mR",
+        "<leader><leader>c",
+        copy_node_path,
+        opts("Copy node path")
+    )
+    vim.keymap.set(
+        "n",
+        "<leader><leader>v",
+        paste_node,
+        opts("Rookie nvim-tree: Paste node")
+    )
+    vim.keymap.set(
+        "n",
+        "<leader><leader>R",
         run_executable_detached,
         opts("Run executable detached")
     )
-    vim.keymap.set("n", "mv", paste_node, opts("Paste node"))
     vim.keymap.set(
         "n",
-        "mC",
+        "<leader><leader>C",
         copy_node_content,
         opts("Copy node content to clipboard")
     )
     vim.keymap.set(
         "n",
-        "mP",
+        "<leader><leader>P",
         paste_system_clipboard_content,
         opts("Paste system clipboard content")
     )
