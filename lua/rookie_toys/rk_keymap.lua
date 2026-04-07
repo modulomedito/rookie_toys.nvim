@@ -70,7 +70,7 @@ function M.setup()
     vim.keymap.set(
         "n",
         "<C-s>",
-        "m6:%s/\\s\\+$//e<Bar>:lua vim.lsp.buf.format()<CR><Bar>w<CR>`6zz:noh<CR>",
+        "m6:%s/\\s\\+$//e<CR>:lua vim.lsp.buf.format()<CR>:w<CR>`6zz:noh<CR>",
         {
             silent = true,
         }
