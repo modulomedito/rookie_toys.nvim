@@ -30,6 +30,16 @@ function M.setup()
             })
         end,
     })
+
+    vim.api.nvim_create_autocmd("FileType", {
+        group = group,
+        pattern = "git",
+        callback = function()
+            -- setlocal iskeyword+=- iskeyword+=/
+            vim.opt_local.iskeyword:append("-")
+            vim.opt_local.iskeyword:append("/")
+        end,
+    })
 end
 
 return M
