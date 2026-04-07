@@ -210,6 +210,34 @@ function M.HexToAscii(is_visual)
     end
 end
 
+function M.AsciiToHex()
+    local text = get_visual_selection()
+    if text == "" then
+        print("No selection found")
+        return
+    end
+
+    local hex_values = {}
+    -- Use vim.fn.str2list to handle multi-byte characters correctly
+    local codes = vim.fn.str2list(text)
+    for _, code in ipairs(codes) do
+        table.insert(hex_values, string.format("%02X", code))
+    end
+
+    local result = table.concat(hex_values, " ")
+
+    -- Copy to system clipboard if available
+    if vim.fn.has("clipboard") == 1 then
+        vim.fn.setreg("+", result)
+        vim.fn.setreg("*", result)
+    end
+
+    -- Also copy to unnamed register for convenience
+    vim.fn.setreg('"', result)
+
+    print("Copied ASCII Hex: " .. result)
+end
+
 function M.UpdateIntelHexChecksum()
     local start_line = 1
     local end_line = vim.fn.line("$")
@@ -236,6 +264,10 @@ function M.setup(_)
     vim.api.nvim_create_user_command("RkHexChecksum", function(_)
         M.UpdateIntelHexChecksum()
     end, { range = "%", bar = true })
+
+    vim.api.nvim_create_user_command("RkHexFromAscii", function(_)
+        M.AsciiToHex()
+    end, { range = true, bar = true })
 end
 
 return M
