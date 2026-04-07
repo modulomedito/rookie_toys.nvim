@@ -17,6 +17,7 @@ Use lazy.nvim to install this plugin.
     'godlygeek/tabular', -- Markdown code syntax highlight
     'hotoo/pangu.vim', -- Pangu spacing
     'isakbm/gitgraph.nvim', -- Git graph visualization
+    'lewis6991/gitsigns.nvim', -- Git gutter-like features
     'kshenoy/vim-signature', -- Bookmarks
     'neovim/nvim-lspconfig', -- Quickstart configs for Nvim LSP
     'nvim-mini/mini.nvim', -- Collection of various small

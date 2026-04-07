@@ -8,6 +8,7 @@ function M.setup()
     require("rookie_toys.dependencies.mini").setup()
     require("rookie_toys.dependencies.flash").setup()
     require("rookie_toys.dependencies.luasnip").setup()
+    require("rookie_toys.dependencies.gitsigns").setup()
 end
 
 return M
