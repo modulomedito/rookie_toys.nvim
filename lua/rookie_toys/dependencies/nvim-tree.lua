@@ -360,6 +360,7 @@ function M.setup()
         },
         filters = {
             dotfiles = false,
+            git_ignored = false,
         },
     })
 end
