@@ -1,10 +1,10 @@
 local M = {}
 
 function M.setup()
-    local group = vim.api.nvim_create_augroup("RkGitCommit", { clear = true })
-
+    local group_gitcommit =
+        vim.api.nvim_create_augroup("RkGitCommit", { clear = true })
     vim.api.nvim_create_autocmd("FileType", {
-        group = group,
+        group = group_gitcommit,
         pattern = "gitcommit",
         callback = function()
             -- setlocal textwidth=100
@@ -31,8 +31,10 @@ function M.setup()
         end,
     })
 
+    local group_gitgraph =
+        vim.api.nvim_create_augroup("RkGitGraph", { clear = true })
     vim.api.nvim_create_autocmd("FileType", {
-        group = group,
+        group = group_gitgraph,
         pattern = "gitgraph",
         callback = function()
             -- setlocal iskeyword+=- iskeyword+=/
@@ -45,6 +47,29 @@ function M.setup()
                 buffer = true,
                 desc = "Git: Jump to closing paren and back to beginning of word",
             })
+        end,
+    })
+
+    -- C/C++ Indentation
+    local group_c = vim.api.nvim_create_augroup("RkC", { clear = true })
+    vim.api.nvim_create_autocmd("FileType", {
+        group = group_c,
+        pattern = "c",
+        callback = function()
+            vim.opt_local.tabstop = 4
+            vim.opt_local.shiftwidth = 4
+            vim.opt_local.expandtab = true
+        end,
+    })
+
+    local group_cpp = vim.api.nvim_create_augroup("RkCpp", { clear = true })
+    vim.api.nvim_create_autocmd("FileType", {
+        group = group_cpp,
+        pattern = "cpp",
+        callback = function()
+            vim.opt_local.tabstop = 4
+            vim.opt_local.shiftwidth = 4
+            vim.opt_local.expandtab = true
         end,
     })
 end
