@@ -27,6 +27,7 @@ function M.setup()
     require("rookie_toys.dependencies.conform").setup()
     require("rookie_toys.dependencies.mini").setup()
     require("rookie_toys.dependencies.flash").setup()
+    require("rookie_toys.dependencies.luasnip").setup()
 end
 
 return M
