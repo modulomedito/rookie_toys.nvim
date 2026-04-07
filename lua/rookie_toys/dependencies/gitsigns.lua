@@ -75,6 +75,8 @@ function M.setup()
                 { desc = "Gitsigns: Toggle Deleted" }
             )
 
+            map("n", "U", gitsigns.reset_hunk, { desc = "Gitsigns: Undo Hunk" })
+
             -- Text object
             map(
                 { "o", "x" },
