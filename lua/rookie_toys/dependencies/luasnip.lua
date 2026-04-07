@@ -278,6 +278,43 @@ function M.setup()
 
     ls.add_snippets("c", { doxy, c80, h80, c0, h0 })
     ls.add_snippets("cpp", { doxy, c80, h80, c0, h0 })
+
+    M.keymap_setup()
+end
+
+function M.keymap_setup()
+    local ls = require("luasnip")
+
+    -- Trigger and Jump keymaps
+    vim.keymap.set({ "i", "s" }, "<Tab>", function()
+        if ls.expand_or_jumpable() then
+            ls.expand_or_jump()
+        else
+            vim.api.nvim_feedkeys(
+                vim.api.nvim_replace_termcodes("<Tab>", true, false, true),
+                "n",
+                false
+            )
+        end
+    end, { silent = true, desc = "LuaSnip: Expand or jump forward" })
+
+    vim.keymap.set({ "i", "s" }, "<S-Tab>", function()
+        if ls.jumpable(-1) then
+            ls.jump(-1)
+        else
+            vim.api.nvim_feedkeys(
+                vim.api.nvim_replace_termcodes("<S-Tab>", true, false, true),
+                "n",
+                false
+            )
+        end
+    end, { silent = true, desc = "LuaSnip: Jump backward" })
+
+    vim.keymap.set({ "i", "s" }, "<C-l>", function()
+        if ls.choice_active() then
+            ls.change_choice(1)
+        end
+    end, { silent = true, desc = "LuaSnip: Next choice" })
 end
 
 return M
