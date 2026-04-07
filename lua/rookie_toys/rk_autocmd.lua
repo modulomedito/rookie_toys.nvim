@@ -38,6 +38,13 @@ function M.setup()
             -- setlocal iskeyword+=- iskeyword+=/
             vim.opt_local.iskeyword:append("-")
             vim.opt_local.iskeyword:append("/")
+
+            -- nnoremap <silent><buffer> gl f)b
+            vim.keymap.set("n", "gl", "f)b", {
+                silent = true,
+                buffer = true,
+                desc = "Git: Jump to closing paren and back to beginning of word",
+            })
         end,
     })
 end
