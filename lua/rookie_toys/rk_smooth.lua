@@ -145,41 +145,41 @@ function M.setup()
 
     -- Register commands
     vim.api.nvim_create_user_command(
-        "RookieSmoothScrollHalfPageDown",
+        "RkSmoothScrollHalfPageDown",
         function()
             M.half_page_down()
         end,
         { desc = "Smooth scroll half page down" }
     )
 
-    vim.api.nvim_create_user_command("RookieSmoothScrollHalfPageUp", function()
+    vim.api.nvim_create_user_command("RkSmoothScrollHalfPageUp", function()
         M.half_page_up()
     end, { desc = "Smooth scroll half page up" })
 
     -- Normal mode mappings
-    vim.keymap.set("n", "<C-d>", "<cmd>RookieSmoothScrollHalfPageDown<CR>", {
+    vim.keymap.set("n", "<C-d>", "<cmd>RkSmoothScrollHalfPageDown<CR>", {
         silent = true,
         desc = "Smooth scroll half page down",
     })
-    vim.keymap.set("n", "<C-f>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
+    vim.keymap.set("n", "<C-f>", "<cmd>RkSmoothScrollHalfPageUp<CR>", {
         silent = true,
         desc = "Smooth scroll half page up",
     })
-    vim.keymap.set("n", "<C-u>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
+    vim.keymap.set("n", "<C-u>", "<cmd>RkSmoothScrollHalfPageUp<CR>", {
         silent = true,
         desc = "Smooth scroll half page up",
     })
 
     -- Visual mode mappings
-    vim.keymap.set("v", "<C-d>", "<cmd>RookieSmoothScrollHalfPageDown<CR>", {
+    vim.keymap.set("v", "<C-d>", "<cmd>RkSmoothScrollHalfPageDown<CR>", {
         silent = true,
         desc = "Smooth scroll half page down",
     })
-    vim.keymap.set("v", "<C-f>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
+    vim.keymap.set("v", "<C-f>", "<cmd>RkSmoothScrollHalfPageUp<CR>", {
         silent = true,
         desc = "Smooth scroll half page up",
     })
-    vim.keymap.set("v", "<C-u>", "<cmd>RookieSmoothScrollHalfPageUp<CR>", {
+    vim.keymap.set("v", "<C-u>", "<cmd>RkSmoothScrollHalfPageUp<CR>", {
         silent = true,
         desc = "Smooth scroll half page up",
     })
