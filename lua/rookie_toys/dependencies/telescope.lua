@@ -100,7 +100,9 @@ local function apply_global_replace(search_text)
             end)
             vim.bo[self.state.bufnr].modifiable = false
 
-            putils.highlighter(self.state.bufnr, "filetype", {})
+            local ft = require("plenary.filetype").detect(entry.filename)
+                or "text"
+            putils.highlighter(self.state.bufnr, ft, {})
 
             local winid = status.preview_win or self.state.winid
             if winid and vim.api.nvim_win_is_valid(winid) then
@@ -216,50 +218,121 @@ local function apply_global_replace(search_text)
                                     -- Refresh preview buffer
                                     local lines =
                                         vim.fn.readfile(entry.filename)
-                                        local picker_bufnr = picker.previewer.state.bufnr
-                                        -- Ensure buffer is still valid before operating on it
-                                        if not vim.api.nvim_buf_is_valid(picker_bufnr) then return end
+                                    local picker_bufnr =
+                                        picker.previewer.state.bufnr
+                                    -- Ensure buffer is still valid before operating on it
+                                    if
+                                        not vim.api.nvim_buf_is_valid(
+                                            picker_bufnr
+                                        )
+                                    then
+                                        return
+                                    end
 
-                                        vim.bo[picker_bufnr].modifiable = true
-                                        vim.api.nvim_buf_set_lines(picker_bufnr, 0, -1, false, lines)
+                                    vim.bo[picker_bufnr].modifiable = true
+                                    vim.api.nvim_buf_set_lines(
+                                        picker_bufnr,
+                                        0,
+                                        -1,
+                                        false,
+                                        lines
+                                    )
 
-                                        -- Apply substitution to preview buffer
-                                        vim.api.nvim_buf_call(picker_bufnr, function()
-                                            pcall(vim.cmd, string.format("silent! %%s/%s/%s/ge", nv_search, nv_replace))
-                                        end)
-                                        vim.bo[picker_bufnr].modifiable = false
-
-                                        -- Ensure cursor stays at the right line
-                                        local winid = picker.preview_win
-                                        if winid and vim.api.nvim_win_is_valid(winid) then
-                                            pcall(vim.api.nvim_win_set_cursor, winid, { entry.lnum, 0 })
-                                            pcall(vim.api.nvim_win_call, winid, function()
-                                                vim.cmd("normal! zz")
-                                            end)
+                                    -- Apply substitution to preview buffer
+                                    vim.api.nvim_buf_call(
+                                        picker_bufnr,
+                                        function()
+                                            pcall(
+                                                vim.cmd,
+                                                string.format(
+                                                    "silent! %%s/%s/%s/ge",
+                                                    nv_search,
+                                                    nv_replace
+                                                )
+                                            )
                                         end
+                                    )
+                                    vim.bo[picker_bufnr].modifiable = false
 
-                                        -- Re-apply highlights
-                                        putils.highlighter(picker_bufnr, "filetype", {})
+                                    -- Ensure cursor stays at the right line
+                                    local winid = picker.preview_win
+                                    if
+                                        winid
+                                        and vim.api.nvim_win_is_valid(winid)
+                                    then
+                                        pcall(
+                                            vim.api.nvim_win_set_cursor,
+                                            winid,
+                                            { entry.lnum, 0 }
+                                        )
+                                        pcall(
+                                            vim.api.nvim_win_call,
+                                            winid,
+                                            function()
+                                                vim.cmd("normal! zz")
+                                            end
+                                        )
+                                    end
 
-                                        local ns_id = vim.api.nvim_create_namespace("rookie_toys_replace")
-                                        vim.api.nvim_buf_clear_namespace(picker_bufnr, ns_id, 0, -1)
+                                    -- Re-apply highlights
+                                    local ft = require("plenary.filetype").detect(
+                                        entry.filename
+                                    ) or "text"
+                                    putils.highlighter(picker_bufnr, ft, {})
 
-                                        -- Highlight the line background slightly to indicate it's the target line
-                                        vim.api.nvim_buf_add_highlight(picker_bufnr, ns_id, "CursorLine", entry.lnum - 1, 0, -1)
+                                    local ns_id = vim.api.nvim_create_namespace(
+                                        "rookie_toys_replace"
+                                    )
+                                    vim.api.nvim_buf_clear_namespace(
+                                        picker_bufnr,
+                                        ns_id,
+                                        0,
+                                        -1
+                                    )
 
-                                        -- Highlight the replaced text specifically
-                                        if current_replace ~= "" then
-                                            local replaced_line = vim.api.nvim_buf_get_lines(picker_bufnr, entry.lnum - 1, entry.lnum, false)[1]
-                                            if replaced_line then
-                                                local start_idx = 1
-                                                while true do
-                                                    local i, j = string.find(replaced_line, current_replace, start_idx, true)
-                                                    if not i then break end
-                                                    vim.api.nvim_buf_add_highlight(picker_bufnr, ns_id, "Search", entry.lnum - 1, i - 1, j)
-                                                    start_idx = j + 1
+                                    -- Highlight the line background slightly to indicate it's the target line
+                                    vim.api.nvim_buf_add_highlight(
+                                        picker_bufnr,
+                                        ns_id,
+                                        "CursorLine",
+                                        entry.lnum - 1,
+                                        0,
+                                        -1
+                                    )
+
+                                    -- Highlight the replaced text specifically
+                                    if current_replace ~= "" then
+                                        local replaced_line =
+                                            vim.api.nvim_buf_get_lines(
+                                                picker_bufnr,
+                                                entry.lnum - 1,
+                                                entry.lnum,
+                                                false
+                                            )[1]
+                                        if replaced_line then
+                                            local start_idx = 1
+                                            while true do
+                                                local i, j = string.find(
+                                                    replaced_line,
+                                                    current_replace,
+                                                    start_idx,
+                                                    true
+                                                )
+                                                if not i then
+                                                    break
                                                 end
+                                                vim.api.nvim_buf_add_highlight(
+                                                    picker_bufnr,
+                                                    ns_id,
+                                                    "Search",
+                                                    entry.lnum - 1,
+                                                    i - 1,
+                                                    j
+                                                )
+                                                start_idx = j + 1
                                             end
                                         end
+                                    end
                                 end)
                             end
                         end
