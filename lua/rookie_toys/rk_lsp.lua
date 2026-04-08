@@ -10,7 +10,7 @@ function M.toggle_highlight_diagnostics()
     vim.diagnostic.enable(not diagnostics_enabled, { bufnr = bufnr })
 
     -- Toggle semantic tokens
-    local semantic_enabled = vim.b.semantic_tokens_enabled ~= false
+    local semantic_enabled = vim.b.semantic_tokens_enabled == true
 
     if semantic_enabled then
         for _, client in ipairs(clients) do
@@ -111,6 +111,16 @@ function M.setup()
     vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("UserLspConfig", {}),
         callback = function(ev)
+            -- Disable diagnostics by default for this buffer
+            vim.diagnostic.enable(false, { bufnr = ev.buf })
+
+            -- Disable semantic tokens by default for this buffer
+            local client = vim.lsp.get_client_by_id(ev.data.client_id)
+            if client and client.server_capabilities.semanticTokensProvider then
+                vim.lsp.semantic_tokens.stop(ev.buf, client.id)
+            end
+            vim.b[ev.buf].semantic_tokens_enabled = false
+
             -- Buffer local mappings.
             -- See `:help vim.lsp.*` for documentation on any of the below functions
             local opts = { buffer = ev.buf }
