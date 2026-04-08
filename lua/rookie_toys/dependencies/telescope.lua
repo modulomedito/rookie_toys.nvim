@@ -88,8 +88,9 @@ local function apply_global_replace(search_text, replace_text)
 
     -- Use cfdo to replace in all files in quickfix
     -- 'update' saves the file after replacement
+    -- Using 'ge' instead of 'gj' because 'j' is not a valid flag and 'e' avoids errors if no match is found in a file
     local cmd =
-        string.format("cfdo %%s/%s/%s/gj | update", nv_search, nv_replace)
+        string.format("cfdo %%s/%s/%s/ge | update", nv_search, nv_replace)
 
     -- Confirm with user
     local count = #output
