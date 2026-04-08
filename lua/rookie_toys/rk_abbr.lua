@@ -16,6 +16,7 @@ function M.setup()
     ]])
 
     -- Command abbreviations
+    -- cabbrev Gg call timer_start(200, {-> execute('RkGitGraph')})\|G
     vim.cmd([[
         cabbrev Gc silent G checkout <C-r><C-w>\|RkGitGraph
         cabbrev Gcherry G cherry-pick <C-r><C-w>\|RkGitGraph
@@ -23,7 +24,6 @@ function M.setup()
         cabbrev Gdell silent G branch -d\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
         cabbrev Gdelr silent G push origin --delete\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
         cabbrev Gf silent G fetch\|RkGitGraph
-        cabbrev Gg call timer_start(200, {-> execute('RkGitGraph')})\|G
         cabbrev Gm silent G merge --ff <C-r><C-w>\|RkGitGraph
         cabbrev Gnew silent G checkout -b\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
         cabbrev Gpl silent G pull\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>

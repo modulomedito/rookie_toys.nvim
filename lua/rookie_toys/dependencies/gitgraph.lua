@@ -1,6 +1,34 @@
 local M = {}
 
 function M.open_gitgraph()
+    local fugitive_buf = -1
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.bo[buf].filetype == "fugitive" then
+            fugitive_buf = buf
+            break
+        end
+    end
+
+    if fugitive_buf == -1 then
+        vim.cmd("G")
+        vim.schedule(function()
+            M.open_gitgraph()
+        end)
+        return
+    end
+
+    -- Focus fugitive window if it exists, otherwise open it
+    local fugitive_win = vim.fn.bufwinid(fugitive_buf)
+    if fugitive_win ~= -1 then
+        vim.api.nvim_set_current_win(fugitive_win)
+    else
+        vim.cmd("G")
+        vim.schedule(function()
+            M.open_gitgraph()
+        end)
+        return
+    end
+
     local gitgraph_buf = -1
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.bo[buf].filetype == "gitgraph" then
@@ -15,7 +43,8 @@ function M.open_gitgraph()
         if win ~= -1 then
             vim.api.nvim_set_current_win(win)
         else
-            -- If not visible, switch current window to it
+            -- If not visible, split right and switch to it
+            vim.cmd("rightbelow vsplit")
             vim.api.nvim_set_current_buf(gitgraph_buf)
         end
     else
@@ -73,11 +102,11 @@ function M.setup()
         },
     })
 
-    -- vim.api.nvim_create_user_command("Gg", function()
-    --     require("gitgraph").draw({}, { all = true, max_count = 5000 })
-    -- end, { desc = "GitGraph - Draw" })
-
     vim.api.nvim_create_user_command("RkGitGraph", function()
+        M.open_gitgraph()
+    end, { desc = "Rookie GitGraph - Draw" })
+
+    vim.api.nvim_create_user_command("Gg", function()
         M.open_gitgraph()
     end, { desc = "Rookie GitGraph - Draw" })
 end
