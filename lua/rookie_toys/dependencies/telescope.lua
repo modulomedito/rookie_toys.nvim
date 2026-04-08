@@ -181,7 +181,8 @@ local function live_grep_with_flags(default_text, is_replace)
                     print("Search text cannot be empty")
                     return
                 end
-                local replace_text = vim.fn.input("Replace with: ")
+                local replace_text =
+                    vim.fn.input("Replace with: ", current_input)
                 apply_global_replace(current_input, replace_text)
             end
 
