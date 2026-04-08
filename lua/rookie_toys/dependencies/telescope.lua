@@ -198,6 +198,13 @@ local function live_grep_with_flags(default_text, is_replace)
                 refresh_with_toggle("regex")
             end)
 
+            map("i", "<C-v>", function()
+                local clipboard = vim.fn.getreg("+")
+                -- Remove newlines as telescope input is single line
+                clipboard = clipboard:gsub("\n", ""):gsub("\r", "")
+                vim.api.nvim_put({ clipboard }, "c", true, true)
+            end)
+
             if is_replace then
                 -- In replace mode, Enter starts the replace workflow
                 map("i", "<CR>", start_replace)
@@ -226,11 +233,13 @@ function M.setup()
 
     -- Create user command for easier access
     vim.api.nvim_create_user_command("RkLiveGrep", function()
-        live_grep_with_flags(nil, false)
+        local word = vim.fn.expand("<cword>")
+        live_grep_with_flags(word, false)
     end, { desc = "Live Grep with togglable VS Code like flags" })
 
     vim.api.nvim_create_user_command("RkGlobalReplace", function()
-        live_grep_with_flags(nil, true)
+        local word = vim.fn.expand("<cword>")
+        live_grep_with_flags(word, true)
     end, { desc = "Global Replace with togglable VS Code like flags" })
 
     vim.api.nvim_create_user_command("RkGlobalReplaceUndo", function()
