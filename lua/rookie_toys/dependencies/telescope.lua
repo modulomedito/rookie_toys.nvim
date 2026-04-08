@@ -209,7 +209,13 @@ local function live_grep_with_flags(default_text, is_replace)
 end
 
 function M.setup()
-    local telescope = require("telescope")
+    local has_telescope, telescope = pcall(require, "telescope")
+
+    if not has_telescope then
+        -- Fallback if telescope not enabled
+        vim.keymap.set("n", "<C-p>", ":find *")
+        return
+    end
 
     -- Global config
     telescope.setup({
@@ -253,6 +259,13 @@ function M.setup()
         "<leader><leader><F2>",
         "<cmd>RkGlobalReplaceUndo<CR>",
         { desc = "Rookie Global Replace Undo" }
+    )
+
+    vim.keymap.set(
+        "n",
+        "<C-p>",
+        require("telescope.builtin").find_files,
+        { desc = "Search Files" }
     )
 end
 
