@@ -1,5 +1,37 @@
 local M = {}
 
+function M.toggle_highlight_diagnostics()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
+    local clients = get_clients({ bufnr = bufnr })
+
+    -- Toggle diagnostics
+    local diagnostics_enabled = vim.diagnostic.is_enabled({ bufnr = bufnr })
+    vim.diagnostic.enable(not diagnostics_enabled, { bufnr = bufnr })
+
+    -- Toggle semantic tokens
+    local semantic_enabled = vim.b.semantic_tokens_enabled ~= false
+
+    if semantic_enabled then
+        for _, client in ipairs(clients) do
+            if client.server_capabilities.semanticTokensProvider then
+                vim.lsp.semantic_tokens.stop(bufnr, client.id)
+            end
+        end
+        vim.b.semantic_tokens_enabled = false
+    else
+        for _, client in ipairs(clients) do
+            if client.server_capabilities.semanticTokensProvider then
+                vim.lsp.semantic_tokens.start(bufnr, client.id)
+            end
+        end
+        vim.b.semantic_tokens_enabled = true
+    end
+
+    local status = not diagnostics_enabled and "ON" or "OFF"
+    print("LSP Highlights & Diagnostics: " .. status)
+end
+
 function M.setup()
     -- Global variable to control enabling LSP keymaps
     if vim.g.rookie_toys_lsp_enable == false then
@@ -158,6 +190,12 @@ function M.setup()
                 vim.lsp.buf.format({ async = true })
             end, { desc = "LSP: [F]ormat buffer", buffer = ev.buf })
         end,
+    })
+
+    -- Toggle semantic highlight and diagnostics
+    vim.keymap.set("n", "<leader>hld", M.toggle_highlight_diagnostics, {
+        desc = "Toggle [h]igh[l]ighting semantic & [d]iagnostics",
+        silent = true,
     })
 end
 
