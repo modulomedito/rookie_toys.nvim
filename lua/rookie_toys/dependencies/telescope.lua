@@ -539,6 +539,15 @@ function M.setup()
         { desc = "Rookie Live Grep (enhance telescope)" }
     )
 
+    vim.keymap.set("v", "<leader>sg", function()
+        local saved_reg = vim.fn.getreg("v")
+        vim.cmd('noau normal! "vy')
+        local text = vim.fn.getreg("v")
+        vim.fn.setreg("v", saved_reg)
+        text = string.gsub(text, "\n", "")
+        live_grep_with_flags(text, false)
+    end, { desc = "Rookie Live Grep (enhance telescope) from selection" })
+
     -- Map <leader><F2> to RkGlobalReplace
     vim.keymap.set(
         "n",
@@ -546,6 +555,17 @@ function M.setup()
         "<cmd>RkGlobalReplace<CR>",
         { desc = "Rookie Global Replace (enhance telescope)" }
     )
+
+    vim.keymap.set("v", "<leader><F2>", function()
+        local saved_reg = vim.fn.getreg("v")
+        vim.cmd('noau normal! "vy')
+        local text = vim.fn.getreg("v")
+        vim.fn.setreg("v", saved_reg)
+        text = string.gsub(text, "\n", "")
+        live_grep_with_flags(text, true)
+    end, {
+        desc = "Rookie Global Replace (enhance telescope) from selection",
+    })
 
     -- Map <leader><leader><F2> to RkGlobalReplaceUndo
     vim.keymap.set(
