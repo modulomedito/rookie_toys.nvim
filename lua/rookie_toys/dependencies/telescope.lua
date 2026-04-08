@@ -37,17 +37,15 @@ local function get_vimgrep_args()
     return args
 end
 
-local function apply_global_replace(search_text, replace_text)
+local function apply_global_replace(search_text)
     if search_text == "" then
         print("Search text cannot be empty")
         return
     end
 
-    -- Build rg command to populate quickfix
+    -- Build rg command to get matches
     local args = get_vimgrep_args()
-    -- Add --vimgrep to get proper output for quickfix
     local rg_cmd_parts = { "rg", "--vimgrep" }
-    -- Copy flags from get_vimgrep_args
     for i = 2, #args do
         table.insert(rg_cmd_parts, args[i])
     end
@@ -56,21 +54,21 @@ local function apply_global_replace(search_text, replace_text)
 
     local rg_cmd = table.concat(rg_cmd_parts, " ")
 
-    -- Populate quickfix list
-    vim.fn.setqflist({}, "r")
     local output = vim.fn.systemlist(rg_cmd)
     if vim.v.shell_error ~= 0 and #output == 0 then
         print("No matches found for: " .. search_text)
         return
     end
 
-    vim.fn.setqflist({}, "a", {
-        title = "Replace: " .. search_text .. " -> " .. replace_text,
-        lines = output,
-    })
+    local pickers = require("telescope.pickers")
+    local finders = require("telescope.finders")
+    local conf = require("telescope.config").values
+    local previewers = require("telescope.previewers")
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
+    local putils = require("telescope.previewers.utils")
 
-    -- Build neovim substitute command
-    -- We need to escape the search and replace strings for Neovim's %s command
+    -- Build neovim substitute command pattern
     local nv_search = search_text
     if not search_opts.is_regex then
         nv_search = vim.fn.escape(nv_search, "\\/.*$^~[]")
@@ -84,30 +82,159 @@ local function apply_global_replace(search_text, replace_text)
         nv_search = "\\c" .. nv_search
     end
 
-    local nv_replace = vim.fn.escape(replace_text, "\\/&")
+    local replace_previewer = previewers.new_buffer_previewer({
+        title = "Replace Preview",
+        define_preview = function(self, entry, status)
+            local current_replace = action_state.get_current_line()
+            local nv_replace = vim.fn.escape(current_replace, "\\/&")
 
-    -- Use cfdo to replace in all files in quickfix
-    -- 'update' saves the file after replacement
-    -- Using 'ge' instead of 'gj' because 'j' is not a valid flag and 'e' avoids errors if no match is found in a file
-    local cmd =
-        string.format("cfdo %%s/%s/%s/ge | update", nv_search, nv_replace)
+            local lines = vim.fn.readfile(entry.filename)
+            vim.bo[self.state.bufnr].modifiable = true
+            vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
 
-    -- Confirm with user
-    local count = #output
-    local confirm = vim.fn.input(
-        string.format(
-            "Found %d matches. Replace '%s' with '%s' in all files? (y/n): ",
-            count,
-            search_text,
-            replace_text
-        )
-    )
-    if confirm:lower() == "y" then
-        vim.cmd(cmd)
-        print(string.format("Replaced %d occurrences.", count))
-    else
-        print("Replace canceled.")
-    end
+            vim.api.nvim_buf_call(self.state.bufnr, function()
+                pcall(vim.cmd, string.format("silent! %%s/%s/%s/ge", nv_search, nv_replace))
+            end)
+            vim.bo[self.state.bufnr].modifiable = false
+
+            putils.highlighter(self.state.bufnr, "filetype", {})
+
+            local winid = status.preview_win or self.state.winid
+            if winid and vim.api.nvim_win_is_valid(winid) then
+                -- Move cursor to target line and center it
+                vim.schedule(function()
+                    pcall(vim.api.nvim_win_set_cursor, winid, { entry.lnum, 0 })
+                    pcall(vim.api.nvim_win_call, winid, function()
+                        vim.cmd("normal! zz")
+                    end)
+                end)
+            end
+
+            -- Highlight the line background slightly to indicate it's the target line
+            local ns_id = vim.api.nvim_create_namespace("rookie_toys_replace")
+            vim.api.nvim_buf_clear_namespace(self.state.bufnr, ns_id, 0, -1)
+            vim.api.nvim_buf_add_highlight(self.state.bufnr, ns_id, "CursorLine", entry.lnum - 1, 0, -1)
+
+            -- Highlight the replaced text specifically
+            if current_replace ~= "" then
+                local replaced_line = vim.api.nvim_buf_get_lines(self.state.bufnr, entry.lnum - 1, entry.lnum, false)[1]
+                if replaced_line then
+                    local start_idx = 1
+                    while true do
+                        local i, j = string.find(replaced_line, current_replace, start_idx, true)
+                        if not i then break end
+                        vim.api.nvim_buf_add_highlight(self.state.bufnr, ns_id, "Search", entry.lnum - 1, i - 1, j)
+                        start_idx = j + 1
+                    end
+                end
+            end
+        end,
+    })
+
+    pickers.new({}, {
+        prompt_title = "Replace: " .. search_text,
+        default_text = search_text,
+        finder = finders.new_table({
+            results = output,
+            entry_maker = function(line)
+                local file, lnum, col, text = string.match(line, "^([^:]+):(%d+):(%d+):(.*)$")
+                if not file then return nil end
+                return {
+                    value = line,
+                    display = file .. ":" .. lnum .. ":" .. col .. " " .. text,
+                    ordinal = line,
+                    filename = file,
+                    lnum = tonumber(lnum),
+                    col = tonumber(col),
+                    text = text,
+                }
+            end,
+        }),
+        sorter = conf.generic_sorter({}),
+        previewer = replace_previewer,
+        attach_mappings = function(prompt_bufnr, map)
+            -- Update preview on text change
+            vim.api.nvim_create_autocmd("TextChangedI", {
+                buffer = prompt_bufnr,
+                callback = function()
+                    local picker = action_state.get_current_picker(prompt_bufnr)
+                    if picker and picker.previewer then
+                        local entry = action_state.get_selected_entry()
+                        if entry and picker.previewer.state and picker.previewer.state.bufnr then
+                            -- Schedule the preview update so we don't interfere with Telescope's internal state machine
+                            vim.schedule(function()
+                                -- Fetch current replace string
+                                local current_replace = action_state.get_current_line()
+                                local nv_replace = vim.fn.escape(current_replace, "\\/&")
+
+                                -- Refresh preview buffer
+                                local lines = vim.fn.readfile(entry.filename)
+                                vim.bo[picker.previewer.state.bufnr].modifiable = true
+                                vim.api.nvim_buf_set_lines(picker.previewer.state.bufnr, 0, -1, false, lines)
+
+                                -- Apply substitution to preview buffer
+                                vim.api.nvim_buf_call(picker.previewer.state.bufnr, function()
+                                    pcall(vim.cmd, string.format("silent! %%s/%s/%s/ge", nv_search, nv_replace))
+                                end)
+                                vim.bo[picker.previewer.state.bufnr].modifiable = false
+
+                                -- Ensure cursor stays at the right line
+                                local winid = picker.preview_win
+                                if winid and vim.api.nvim_win_is_valid(winid) then
+                                    pcall(vim.api.nvim_win_set_cursor, winid, { entry.lnum, 0 })
+                                    pcall(vim.api.nvim_win_call, winid, function()
+                                        vim.cmd("normal! zz")
+                                    end)
+                                end
+
+                                -- Re-apply highlights
+                                putils.highlighter(picker.previewer.state.bufnr, "filetype", {})
+
+                                local ns_id = vim.api.nvim_create_namespace("rookie_toys_replace")
+                                vim.api.nvim_buf_clear_namespace(picker.previewer.state.bufnr, ns_id, 0, -1)
+
+                                -- Highlight the line background slightly to indicate it's the target line
+                                vim.api.nvim_buf_add_highlight(picker.previewer.state.bufnr, ns_id, "CursorLine", entry.lnum - 1, 0, -1)
+
+                                -- Highlight the replaced text specifically
+                                if current_replace ~= "" then
+                                    local replaced_line = vim.api.nvim_buf_get_lines(picker.previewer.state.bufnr, entry.lnum - 1, entry.lnum, false)[1]
+                                    if replaced_line then
+                                        local start_idx = 1
+                                        while true do
+                                            local i, j = string.find(replaced_line, current_replace, start_idx, true)
+                                            if not i then break end
+                                            vim.api.nvim_buf_add_highlight(picker.previewer.state.bufnr, ns_id, "Search", entry.lnum - 1, i - 1, j)
+                                            start_idx = j + 1
+                                        end
+                                    end
+                                end
+                            end)
+                        end
+                    end
+                end,
+            })
+
+            actions.select_default:replace(function()
+                local replace_text = action_state.get_current_line()
+                actions.close(prompt_bufnr)
+
+                -- Populate quickfix list
+                vim.fn.setqflist({}, "r")
+                vim.fn.setqflist({}, "a", {
+                    title = "Replace: " .. search_text .. " -> " .. replace_text,
+                    lines = output,
+                })
+
+                local nv_replace_final = vim.fn.escape(replace_text, "\\/&")
+                local cmd = string.format("cfdo %%s/%s/%s/ge | update", nv_search, nv_replace_final)
+
+                vim.cmd(cmd)
+                print(string.format("Replaced occurrences with '%s'.", replace_text))
+            end)
+            return true
+        end,
+    }):find()
 end
 
 local function global_replace_undo()
@@ -181,9 +308,7 @@ local function live_grep_with_flags(default_text, is_replace)
                     print("Search text cannot be empty")
                     return
                 end
-                local replace_text =
-                    vim.fn.input("Replace with: ", current_input)
-                apply_global_replace(current_input, replace_text)
+                apply_global_replace(current_input)
             end
 
             -- Shortcuts like VS Code:
