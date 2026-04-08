@@ -24,7 +24,7 @@ Use lazy.nvim to install this plugin.
     'nvim-tree/nvim-tree.lua', -- File explorer
     'sindrets/diffview.nvim', -- Git diff view
     't9md/vim-textmanip', -- Text movement
-    'vim-scripts/DrawIt', -- Draw ASCII art
+    -- 'vim-scripts/DrawIt', -- Draw ASCII art
     'tpope/vim-fugitive', -- Git wrapper
   },
 },
