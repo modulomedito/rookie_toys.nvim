@@ -518,8 +518,7 @@ function M.setup()
 
     -- Create user command for easier access
     vim.api.nvim_create_user_command("RkLiveGrep", function()
-        local word = vim.fn.expand("<cword>")
-        live_grep_with_flags(word, false)
+        live_grep_with_flags("", false)
     end, { desc = "Live Grep with togglable VS Code like flags" })
 
     vim.api.nvim_create_user_command("RkGlobalReplace", function()
