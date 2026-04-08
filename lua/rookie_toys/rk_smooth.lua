@@ -77,6 +77,9 @@ local function start_scroll(dir, scale)
     }
 
     timer = uv.new_timer()
+    if not timer then
+        return
+    end
     timer:start(
         interval,
         interval,
@@ -144,13 +147,9 @@ function M.setup()
     end
 
     -- Register commands
-    vim.api.nvim_create_user_command(
-        "RkSmoothScrollHalfPageDown",
-        function()
-            M.half_page_down()
-        end,
-        { desc = "Smooth scroll half page down" }
-    )
+    vim.api.nvim_create_user_command("RkSmoothScrollHalfPageDown", function()
+        M.half_page_down()
+    end, { desc = "Smooth scroll half page down" })
 
     vim.api.nvim_create_user_command("RkSmoothScrollHalfPageUp", function()
         M.half_page_up()

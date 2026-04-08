@@ -28,6 +28,7 @@ require("rookie_toys.rk_tabrename").setup()
 require("rookie_toys.rk_c").setup()
 require("rookie_toys.rk_abbr").setup()
 require("rookie_toys.rk_autocmd").setup()
+require("rookie_toys.rk_7zip").setup()
 
 -- local c = require("rookie_toys.c")
 -- local git = require("rookie_toys.git")
