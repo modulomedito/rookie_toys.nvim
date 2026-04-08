@@ -2,30 +2,36 @@ local M = {}
 
 function M.toggle_highlight_diagnostics()
     local bufnr = vim.api.nvim_get_current_buf()
-    local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
-    local clients = get_clients({ bufnr = bufnr })
 
     -- Toggle diagnostics
     local diagnostics_enabled = vim.diagnostic.is_enabled({ bufnr = bufnr })
     vim.diagnostic.enable(not diagnostics_enabled, { bufnr = bufnr })
 
     -- Toggle semantic tokens
-    local semantic_enabled = vim.b.semantic_tokens_enabled == true
-
-    if semantic_enabled then
-        for _, client in ipairs(clients) do
-            if client.server_capabilities.semanticTokensProvider then
-                vim.lsp.semantic_tokens.stop(bufnr, client.id)
-            end
-        end
-        vim.b.semantic_tokens_enabled = false
+    local semantic_enabled = false
+    if vim.lsp.semantic_tokens and vim.lsp.semantic_tokens.is_enabled then
+        semantic_enabled = vim.lsp.semantic_tokens.is_enabled({ bufnr = bufnr })
+        vim.lsp.semantic_tokens.enable(not semantic_enabled, { bufnr = bufnr })
     else
-        for _, client in ipairs(clients) do
-            if client.server_capabilities.semanticTokensProvider then
-                vim.lsp.semantic_tokens.start(bufnr, client.id)
+        -- Fallback for older Neovim versions
+        semantic_enabled = vim.b[bufnr].semantic_tokens_enabled == true
+        local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
+        local clients = get_clients({ bufnr = bufnr })
+        if semantic_enabled then
+            for _, client in ipairs(clients) do
+                if client.server_capabilities.semanticTokensProvider then
+                    vim.lsp.semantic_tokens.stop(bufnr, client.id)
+                end
             end
+            vim.b[bufnr].semantic_tokens_enabled = false
+        else
+            for _, client in ipairs(clients) do
+                if client.server_capabilities.semanticTokensProvider then
+                    vim.lsp.semantic_tokens.start(bufnr, client.id)
+                end
+            end
+            vim.b[bufnr].semantic_tokens_enabled = true
         end
-        vim.b.semantic_tokens_enabled = true
     end
 
     local status = not diagnostics_enabled and "ON" or "OFF"
@@ -115,11 +121,26 @@ function M.setup()
             vim.diagnostic.enable(false, { bufnr = ev.buf })
 
             -- Disable semantic tokens by default for this buffer
-            local client = vim.lsp.get_client_by_id(ev.data.client_id)
-            if client and client.server_capabilities.semanticTokensProvider then
-                vim.lsp.semantic_tokens.stop(ev.buf, client.id)
-            end
-            vim.b[ev.buf].semantic_tokens_enabled = false
+            vim.schedule(function()
+                if not vim.api.nvim_buf_is_valid(ev.buf) then
+                    return
+                end
+                if
+                    vim.lsp.semantic_tokens
+                    and vim.lsp.semantic_tokens.enable
+                then
+                    vim.lsp.semantic_tokens.enable(false, { bufnr = ev.buf })
+                else
+                    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+                    if
+                        client
+                        and client.server_capabilities.semanticTokensProvider
+                    then
+                        vim.lsp.semantic_tokens.stop(ev.buf, client.id)
+                    end
+                end
+                vim.b[ev.buf].semantic_tokens_enabled = false
+            end)
 
             -- Buffer local mappings.
             -- See `:help vim.lsp.*` for documentation on any of the below functions
