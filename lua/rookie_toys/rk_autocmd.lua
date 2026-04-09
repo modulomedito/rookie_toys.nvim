@@ -90,13 +90,14 @@ function M.setup()
     -- Fugitive Tab Name
     local group_fugitive =
         vim.api.nvim_create_augroup("RkFugitive", { clear = true })
-    vim.api.nvim_create_autocmd("FileType", {
+    vim.api.nvim_create_autocmd({ "FileType", "BufEnter" }, {
         group = group_fugitive,
-        pattern = "fugitive",
         callback = function()
-            -- Set tab-local variables that many statusline/tabline plugins use
-            pcall(vim.api.nvim_tabpage_set_var, 0, "title", "fugitive")
-            pcall(vim.api.nvim_tabpage_set_var, 0, "tab_name", "fugitive")
+            if vim.bo.filetype == "fugitive" then
+                -- Set tab-local variables that many statusline/tabline plugins use
+                vim.t.title = "fugitive"
+                vim.t.tab_name = "fugitive"
+            end
         end,
     })
 end
