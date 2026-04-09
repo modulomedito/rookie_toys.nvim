@@ -1,5 +1,7 @@
 local M = {}
 
+local unpack = table.unpack or unpack
+
 -- State variables
 local state = {
     last_pattern = "",
@@ -466,7 +468,7 @@ function M.setup()
 
     -- User Commands
     vim.api.nvim_create_user_command("RkFarFind", function(opts)
-        M.find(table.unpack(opts.fargs))
+        M.find(unpack(opts.fargs))
     end, {
         nargs = "*",
         complete = function(arg_lead, cmd_line, cursor_pos)
@@ -476,7 +478,7 @@ function M.setup()
     })
 
     vim.api.nvim_create_user_command("RkFarReplace", function(opts)
-        M.replace(table.unpack(opts.fargs))
+        M.replace(unpack(opts.fargs))
     end, {
         nargs = "*",
         complete = function(arg_lead, cmd_line, cursor_pos)
