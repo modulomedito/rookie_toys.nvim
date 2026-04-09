@@ -171,6 +171,11 @@ end
 
 -- Run search logic
 local function run_search(pattern, file_mask, flags, replace_with, is_find_only)
+    local cursor_pos = {
+        bufnr = vim.api.nvim_get_current_buf(),
+        lnum = vim.api.nvim_win_get_cursor(0)[1],
+        col = vim.api.nvim_win_get_cursor(0)[2] + 1,
+    }
     local rg_opts = "--vimgrep --no-heading --hidden"
 
     -- Case Sensitive
@@ -210,6 +215,35 @@ local function run_search(pattern, file_mask, flags, replace_with, is_find_only)
 
     local qf_list = vim.fn.getqflist()
     if #qf_list > 0 then
+        -- Find the current word position and move it to the first
+        local match_idx = nil
+        for i, item in ipairs(qf_list) do
+            if item.bufnr == cursor_pos.bufnr and item.lnum == cursor_pos.lnum then
+                if not flags.r and pattern ~= "" then
+                    -- Literal match: check if cursor is within the word
+                    if
+                        item.col <= cursor_pos.col
+                        and item.col + #pattern > cursor_pos.col
+                    then
+                        match_idx = i
+                        break
+                    end
+                else
+                    -- Regex match: find the closest one before cursor
+                    if item.col <= cursor_pos.col then
+                        if not match_idx or item.col > qf_list[match_idx].col then
+                            match_idx = i
+                        end
+                    end
+                end
+            end
+        end
+
+        if match_idx and match_idx > 1 then
+            local item = table.remove(qf_list, match_idx)
+            table.insert(qf_list, 1, item)
+        end
+
         local mapping = compute_file_mapping(qf_list)
         local ctx = {
             file_mapping = mapping,
@@ -218,6 +252,7 @@ local function run_search(pattern, file_mask, flags, replace_with, is_find_only)
             is_find_only = is_find_only,
         }
         vim.fn.setqflist({}, "r", {
+            items = qf_list,
             context = ctx,
             quickfixtextfunc = "v:lua.require('rookie_toys.rk_far').quickfix_text_func",
         })
