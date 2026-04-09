@@ -26,6 +26,11 @@ Use lazy.nvim to install this plugin.
     't9md/vim-textmanip', -- Text movement
     -- 'vim-scripts/DrawIt', -- Draw ASCII art
     'tpope/vim-fugitive', -- Git wrapper
+    'olimorris/codecompanion.nvim',
+    'nvim-lua/plenary.nvim',
+    'nvim-treesitter/nvim-treesitter',
+    'MeanderingProgrammer/render-markdown.nvim',
+    'HakonHarnes/img-clip.nvim',
   },
 },
 ```
