@@ -24,6 +24,7 @@ function M.setup()
     require("rookie_toys.rk_gitdiff").setup()
     require("rookie_toys.rk_tabrename").setup()
     require("rookie_toys.rk_abbr").setup()
+    require("rookie_toys.rk_far").setup()
 
     -- local c = require("rookie_toys.c")
     -- local git = require("rookie_toys.git")
