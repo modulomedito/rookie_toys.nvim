@@ -1,6 +1,20 @@
 local M = {}
 
 function M.open_gitgraph()
+    vim.notify("Git fetching...", vim.log.levels.INFO)
+    vim.fn.jobstart({ "git", "fetch" }, {
+        on_exit = function(_, exit_code)
+            if exit_code == 0 then
+                vim.notify("Git fetch completed", vim.log.levels.INFO)
+            else
+                vim.notify("Git fetch failed", vim.log.levels.WARN)
+            end
+            M.draw_gitgraph()
+        end,
+    })
+end
+
+function M.draw_gitgraph()
     local fugitive_buf = -1
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
         if vim.bo[buf].filetype == "fugitive" then
@@ -12,7 +26,7 @@ function M.open_gitgraph()
     if fugitive_buf == -1 then
         vim.cmd("G")
         vim.schedule(function()
-            M.open_gitgraph()
+            M.draw_gitgraph()
         end)
         return
     end
@@ -24,7 +38,7 @@ function M.open_gitgraph()
     else
         vim.cmd("G")
         vim.schedule(function()
-            M.open_gitgraph()
+            M.draw_gitgraph()
         end)
         return
     end
