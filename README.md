@@ -13,7 +13,6 @@ Use lazy.nvim to install this plugin.
     'NeogitOrg/neogit', -- Git wrapper
     'azabiong/vim-highlighter', -- Highlight words/patterns
     'fedorenchik/VimCalc3', -- Vim calculator
-    'folke/flash.nvim', -- Visual cursor jump
     'godlygeek/tabular', -- Markdown code syntax highlight
     'hotoo/pangu.vim', -- Pangu spacing
     'isakbm/gitgraph.nvim', -- Git graph visualization

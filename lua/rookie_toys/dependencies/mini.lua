@@ -1,8 +1,8 @@
 local M = {}
 
 function M.setup()
-    local align = require("mini.align")
-    align.setup()
+    require("mini.align").setup()
+    require("mini.jump2d").setup()
 end
 
 return M
