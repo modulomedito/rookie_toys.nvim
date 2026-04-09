@@ -9,6 +9,7 @@ function M.setup()
         callback = function()
             -- setlocal textwidth=100
             vim.opt_local.textwidth = 100
+            vim.opt_local.undofile = false
 
             -- nnoremap <silent><buffer> <leader>f :PanguAll<CR>
             vim.keymap.set("n", "<leader>f", ":PanguAll<CR>", {
