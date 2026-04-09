@@ -218,7 +218,10 @@ local function run_search(pattern, file_mask, flags, replace_with, is_find_only)
         -- Find the current word position and move it to the first
         local match_idx = nil
         for i, item in ipairs(qf_list) do
-            if item.bufnr == cursor_pos.bufnr and item.lnum == cursor_pos.lnum then
+            if
+                item.bufnr == cursor_pos.bufnr
+                and item.lnum == cursor_pos.lnum
+            then
                 if not flags.r and pattern ~= "" then
                     -- Literal match: check if cursor is within the word
                     if
@@ -231,7 +234,10 @@ local function run_search(pattern, file_mask, flags, replace_with, is_find_only)
                 else
                     -- Regex match: find the closest one before cursor
                     if item.col <= cursor_pos.col then
-                        if not match_idx or item.col > qf_list[match_idx].col then
+                        if
+                            not match_idx
+                            or item.col > qf_list[match_idx].col
+                        then
                             match_idx = i
                         end
                     end
@@ -438,6 +444,24 @@ function M.setup()
         "<leader>gf",
         ":RkFarFind ",
         { desc = "RookieFar - Find Pattern" }
+    )
+
+    vim.keymap.set("n", "<leader>gdo", ":RkFarDo<CR>")
+
+    vim.keymap.set(
+        "n",
+        "<leader>gr",
+        "*:RkFarReplace -c -w <C-r><C-w> <C-r><C-w> **/*.[ch]"
+            .. string.rep("<Left>", 10),
+        { desc = "RookieFar - Replace Word Under Cursor" }
+    )
+
+    vim.keymap.set(
+        "v",
+        "<leader>gr",
+        'gv"-y/<C-r>-<CR>N:RkFarReplace -c <C-r>- <C-r>- **/*.[ch]'
+            .. string.rep("<Left>", 10),
+        { desc = "RookieFar - Replace Selection" }
     )
 
     -- User Commands
