@@ -366,7 +366,7 @@ local function apply_global_replace(search_text)
                     local original_cursor =
                         vim.api.nvim_win_get_cursor(original_win)
 
-                    vim.cmd(cmd)
+                    vim.cmd("silent! " .. cmd)
 
                     -- Restore cursor to original window/buffer if they still exist
                     if
