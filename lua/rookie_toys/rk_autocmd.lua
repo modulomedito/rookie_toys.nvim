@@ -86,6 +86,19 @@ function M.setup()
             vim.opt_local.indentexpr = "" -- Disable Treesitter's indent engine for C
         end,
     })
+
+    -- Fugitive Tab Name
+    local group_fugitive =
+        vim.api.nvim_create_augroup("RkFugitive", { clear = true })
+    vim.api.nvim_create_autocmd("FileType", {
+        group = group_fugitive,
+        pattern = "fugitive",
+        callback = function()
+            -- Set tab-local variables that many statusline/tabline plugins use
+            pcall(vim.api.nvim_tabpage_set_var, 0, "title", "fugitive")
+            pcall(vim.api.nvim_tabpage_set_var, 0, "tab_name", "fugitive")
+        end,
+    })
 end
 
 return M
