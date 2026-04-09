@@ -200,12 +200,13 @@ local function run_search(pattern, file_mask, flags, replace_with, is_find_only)
         end
     end
 
-    local grep_output = vim.fn.system(cmd)
+    local grep_output = vim.fn.systemlist(cmd)
 
-    local old_efm = vim.o.efm
-    vim.o.efm = "%f:%l:%c:%m"
-    vim.fn.cgetexpr(grep_output)
-    vim.o.efm = old_efm
+    vim.fn.setqflist({}, "r", {
+        title = "RkFar: " .. pattern,
+        lines = grep_output,
+        efm = "%f:%l:%c:%m",
+    })
 
     local qf_list = vim.fn.getqflist()
     if #qf_list > 0 then
