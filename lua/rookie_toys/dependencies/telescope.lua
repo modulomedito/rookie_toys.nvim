@@ -528,8 +528,13 @@ function M.setup()
     end, { desc = "Live Grep with togglable VS Code like flags" })
 
     vim.api.nvim_create_user_command("RkGlobalReplace", function()
-        local word = vim.fn.expand("<cword>")
-        live_grep_with_flags(word, true)
+        local search_text = vim.fn.expand("<cword>")
+        if search_text ~= "" then
+            apply_global_replace(search_text)
+        else
+            -- If no word under cursor, fallback to search picker
+            live_grep_with_flags("", true)
+        end
     end, { desc = "Global Replace with togglable VS Code like flags" })
 
     vim.api.nvim_create_user_command("RkGlobalReplaceUndo", function()
@@ -567,9 +572,14 @@ function M.setup()
         local text = vim.fn.getreg("v")
         vim.fn.setreg("v", saved_reg)
         text = string.gsub(text, "\n", "")
-        live_grep_with_flags(text, true)
+
+        if text ~= "" then
+            apply_global_replace(text)
+        else
+            live_grep_with_flags("", true)
+        end
     end, {
-        desc = "Rookie Global Replace (enhance telescope) from selection",
+        desc = "Global Replace Selection (Rookie Toys)",
     })
 
     -- Map <leader><leader><F2> to RkGlobalReplaceUndo
