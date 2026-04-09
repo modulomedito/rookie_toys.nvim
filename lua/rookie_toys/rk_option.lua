@@ -19,14 +19,16 @@ function M.setup()
     vim.opt.formatoptions:append("mB")
     vim.opt.grepformat = "%f:%l:%c:%m,%f:%l:%m"
 
-    if vim.fn.has("gui_running") == 1 then
-        vim.opt.guifont = "Cascadia Code:h9"
-        vim.opt.guioptions:append("k")
-        vim.opt.guioptions:remove("L")
-        vim.opt.guioptions:remove("T")
-        vim.opt.guioptions:remove("e")
-        vim.opt.guioptions:remove("m")
-        vim.opt.guioptions:remove("r")
+    if vim.fn.has("gui_running") == 1 or vim.g.neovide then
+        pcall(function()
+            vim.opt.guifont = "Agave Nerd Font:h12"
+            vim.opt.guioptions:append("k")
+            vim.opt.guioptions:remove("L")
+            vim.opt.guioptions:remove("T")
+            vim.opt.guioptions:remove("e")
+            vim.opt.guioptions:remove("m")
+            vim.opt.guioptions:remove("r")
+        end)
         vim.opt.columns = 107
         vim.opt.lines = 25
     end
@@ -55,7 +57,9 @@ function M.setup()
     vim.opt.signcolumn = "yes"
     vim.opt.smartcase = true
     vim.opt.smarttab = true
-    vim.opt.smoothscroll = true
+    pcall(function()
+        vim.opt.smoothscroll = true
+    end)
     vim.opt.softtabstop = 4
     vim.opt.splitbelow = true
     vim.opt.splitright = true
