@@ -78,6 +78,26 @@ function M.setup()
     else
         vim.opt.undodir = vim.fn.expand("$HOME/vimfiles/undo/")
         vim.opt.shadafile = vim.fn.expand("$HOME/vimfiles/main.shada")
+
+        -- Fix Windows shell issues (especially for paths with spaces)
+        if vim.fn.executable("pwsh") == 1 or vim.fn.executable("powershell") == 1 then
+            local pwsh = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell"
+            vim.opt.shell = pwsh
+            vim.opt.shellcmdflag =
+                "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;"
+            vim.opt.shellquote = ""
+            vim.opt.shellxquote = ""
+            vim.opt.shellpipe = "| Out-File -Encoding UTF8 %s"
+            vim.opt.shellredir = "| Out-File -Encoding UTF8 %s"
+        else
+            vim.opt.shell = "cmd.exe"
+            vim.opt.shellcmdflag = "/s /c"
+            vim.opt.shellquote = ""
+            vim.opt.shellxquote = "\""
+        end
+
+        -- Ensure git executable is found without space issues for fugitive
+        vim.g.fugitive_git_executable = "git"
     end
 end
 

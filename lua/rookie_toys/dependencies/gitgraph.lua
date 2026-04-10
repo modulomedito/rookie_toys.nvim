@@ -24,7 +24,11 @@ function M.draw_gitgraph()
     end
 
     if fugitive_buf == -1 then
-        vim.cmd("G")
+        local ok, err = pcall(vim.cmd, "G")
+        if not ok then
+            vim.notify("Fugitive failed: " .. tostring(err), vim.log.levels.ERROR)
+            return
+        end
         vim.schedule(function()
             M.draw_gitgraph()
         end)
@@ -38,7 +42,7 @@ function M.draw_gitgraph()
             vim.api.nvim_set_current_buf(fugitive_buf)
         end
         -- Refresh fugitive
-        vim.cmd("G")
+        pcall(vim.cmd, "G")
     end
 
     local gitgraph_buf = -1

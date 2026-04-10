@@ -5,10 +5,8 @@ local function check_rg()
     end
 
     if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
-        vim.opt.shell = "cmd.exe"
-        vim.opt.shellcmdflag = "/c"
-        vim.opt.shellpipe = ">%s 2>&1"
-        vim.opt.shellredir = ">%s 2>&1"
+        -- Use options from rk_option.lua by default
+        -- Just ensure grepprg is correct
     end
 
     vim.opt.grepprg = "rg --vimgrep --no-heading --smart-case --hidden"
