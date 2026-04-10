@@ -114,8 +114,8 @@ function M.setup()
     })
 
     -- Normal, Visual, Operator-pending mode
-    vim.keymap.set({ "n", "v", "o" }, "<leader>P", '"0P')
-    vim.keymap.set({ "n", "v", "o" }, "<leader>p", '"0p')
+    -- vim.keymap.set({ "n", "v", "o" }, "<leader>P", '"0P')
+    -- vim.keymap.set({ "n", "v", "o" }, "<leader>p", '"0p')
     vim.keymap.set({ "n", "v", "o" }, "H", "g^")
     vim.keymap.set({ "n", "v", "o" }, "L", "g_")
 
