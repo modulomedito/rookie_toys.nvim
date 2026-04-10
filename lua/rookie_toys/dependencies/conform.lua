@@ -8,15 +8,23 @@ function M.setup()
 
     conform.setup({
         formatters_by_ft = {
-            -- c = { "clang-format" },
-            -- cpp = { "clang-format" },
+            c = { { "uncrustify", "clang-format" } },
+            cpp = { { "uncrustify", "clang-format" } },
         },
         format_on_save = {
-            -- -- These options will be passed to conform.format()
-            -- timeout_ms = 500,
-            -- lsp_fallback = true,
+            timeout_ms = 500,
+            lsp_fallback = true,
         },
     })
+
+    vim.keymap.set({ "n", "v" }, "<M-S-f>", function()
+        conform.format({
+            lsp_fallback = true,
+            async = false,
+            timeout_ms = 500,
+        })
+        vim.api.nvim_input("<Esc>")
+    end, { silent = true, desc = "Format file or range (conform)" })
 end
 
 return M
