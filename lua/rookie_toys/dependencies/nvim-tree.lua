@@ -1,4 +1,5 @@
 local M = {}
+local last_op = "copy"
 
 local function copy_node_path()
     local api = require("nvim-tree.api")
@@ -10,7 +11,22 @@ local function copy_node_path()
     local path = node.absolute_path
     vim.fn.setreg("+", path)
     vim.fn.setreg("*", path)
+    last_op = "copy"
     print("Marked for copy to clipboard: " .. path)
+end
+
+local function cut_node()
+    local api = require("nvim-tree.api")
+    local node = api.tree.get_node_under_cursor()
+    if not node then
+        print("No node selected")
+        return
+    end
+    local path = node.absolute_path
+    vim.fn.setreg("+", path)
+    vim.fn.setreg("*", path)
+    last_op = "cut"
+    print("Marked for cut: " .. path)
 end
 
 local function run_executable_detached()
@@ -57,6 +73,42 @@ local function copy_node_content()
         print("Copied file to system clipboard (Explorer compatible): " .. path)
     else
         print("Failed to copy file to clipboard: " .. output)
+    end
+end
+
+local function cut_node_content()
+    local api = require("nvim-tree.api")
+    local node = api.tree.get_node_under_cursor()
+    if not node then
+        print("No node selected")
+        return
+    end
+    local path = node.absolute_path
+    path = path:gsub("/", "\\")
+
+    if vim.fn.filereadable(path) == 0 and vim.fn.isdirectory(path) == 0 then
+        print("Path not readable: " .. path)
+        return
+    end
+
+    local ps_path = path:gsub("'", "''")
+    -- In Windows, "cut" is set by Preferred DropEffect = 2
+    local script = string.format(
+        "Add-Type -AssemblyName System.Windows.Forms; $files = New-Object System.Collections.Specialized.StringCollection; $files.Add('%s'); $data = New-Object System.Windows.Forms.DataObject; $data.SetFileDropList($files); $ms = New-Object System.IO.MemoryStream; $ms.Write([byte[]](2,0,0,0), 0, 4); $data.SetData('Preferred DropEffect', $ms); [System.Windows.Forms.Clipboard]::SetDataObject($data, $true)",
+        ps_path
+    )
+    local cmd = string.format(
+        'powershell -NoProfile -Command "%s"',
+        script:gsub('"', '""')
+    )
+
+    local output = vim.fn.system(cmd)
+    if vim.v.shell_error == 0 then
+        print(
+            "Marked for cut in system clipboard (Explorer compatible): " .. path
+        )
+    else
+        print("Failed to cut file to clipboard: " .. output)
     end
 end
 
@@ -130,6 +182,10 @@ local function paste_node()
     local targetPath = destDir .. "/" .. sourceName
 
     if targetPath == sourcePath then
+        if last_op == "cut" then
+            print("Source and destination are the same, no-op.")
+            return
+        end
         targetPath = build_copy_target_path(sourcePath, destDir)
     end
 
@@ -140,25 +196,51 @@ local function paste_node()
 
     local cmd
     if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
-        cmd = string.format(
-            "powershell -NoProfile -Command \"Copy-Item -Path '%s' -Destination '%s' -Recurse\"",
-            sourcePath:gsub("'", "''"),
-            targetPath:gsub("'", "''")
-        )
+        if last_op == "cut" then
+            cmd = string.format(
+                "powershell -NoProfile -Command \"Move-Item -Path '%s' -Destination '%s' -Force\"",
+                sourcePath:gsub("'", "''"),
+                targetPath:gsub("'", "''")
+            )
+        else
+            cmd = string.format(
+                "powershell -NoProfile -Command \"Copy-Item -Path '%s' -Destination '%s' -Recurse\"",
+                sourcePath:gsub("'", "''"),
+                targetPath:gsub("'", "''")
+            )
+        end
     else
-        cmd = string.format(
-            'cp -r "%s" "%s"',
-            sourcePath:gsub('"', '\\"'),
-            targetPath:gsub('"', '\\"')
-        )
+        if last_op == "cut" then
+            cmd = string.format(
+                'mv "%s" "%s"',
+                sourcePath:gsub('"', '\\"'),
+                targetPath:gsub('"', '\\"')
+            )
+        else
+            cmd = string.format(
+                'cp -r "%s" "%s"',
+                sourcePath:gsub('"', '\\"'),
+                targetPath:gsub('"', '\\"')
+            )
+        end
     end
 
     local output = vim.fn.system(cmd)
     if vim.v.shell_error == 0 then
-        print("Copied to " .. targetPath)
+        if last_op == "cut" then
+            print("Moved to " .. targetPath)
+            last_op = "copy" -- Reset to copy after move
+        else
+            print("Copied to " .. targetPath)
+        end
         api.tree.reload()
     else
-        print("Could not copy node: " .. output)
+        print(
+            "Could not "
+                .. (last_op == "cut" and "move" or "copy")
+                .. " node: "
+                .. output
+        )
     end
 end
 
@@ -305,12 +387,8 @@ local function my_on_attach(bufnr)
         end
     end, opts("Change CWD and nvim-tree root to node"))
 
-    vim.keymap.set(
-        "n",
-        "<leader>mc",
-        copy_node_path,
-        opts("Copy node path")
-    )
+    vim.keymap.set("n", "<leader>mc", copy_node_path, opts("Copy node path"))
+    vim.keymap.set("n", "<leader>mx", cut_node, opts("Cut node"))
     vim.keymap.set(
         "n",
         "<leader>mv",
@@ -328,6 +406,12 @@ local function my_on_attach(bufnr)
         "<leader>mC",
         copy_node_content,
         opts("Copy node content to clipboard")
+    )
+    vim.keymap.set(
+        "n",
+        "<leader>mX",
+        cut_node_content,
+        opts("Cut node content to clipboard")
     )
     vim.keymap.set(
         "n",
