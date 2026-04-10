@@ -51,6 +51,7 @@ local function apply_global_replace(search_text)
     end
     table.insert(rg_cmd_parts, "--")
     table.insert(rg_cmd_parts, search_text)
+    table.insert(rg_cmd_parts, ".")
 
     local rg_cmd = table.concat(rg_cmd_parts, " ")
 
@@ -441,6 +442,7 @@ local function live_grep_with_flags(default_text, is_replace)
     )
 
     builtin.live_grep({
+        cwd = vim.fn.getcwd(),
         prompt_title = title,
         default_text = default_text,
         vimgrep_arguments = get_vimgrep_args(),
@@ -590,12 +592,14 @@ function M.setup()
         { desc = "Rookie Global Replace Undo" }
     )
 
-    vim.keymap.set(
-        "n",
-        "<C-p>",
-        require("telescope.builtin").find_files,
-        { desc = "Search Files" }
-    )
+    vim.keymap.set("n", "<C-p>", function()
+        require("telescope.builtin").find_files({ cwd = vim.fn.getcwd() })
+    end, { desc = "Search Files" })
+
+    -- Add grep_string mapping restricted to CWD
+    vim.keymap.set("n", "<leader>sw", function()
+        require("telescope.builtin").grep_string({ cwd = vim.fn.getcwd() })
+    end, { desc = "Search Word under cursor in CWD" })
 end
 
 return M
