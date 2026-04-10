@@ -63,12 +63,12 @@ local function copy_node_content()
     end
 
     local ps_path = path:gsub("'", "''")
-    local cmd = string.format(
-        [[powershell -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; $files = New-Object System.Collections.Specialized.StringCollection; $files.Add('%s'); [System.Windows.Forms.Clipboard]::SetFileDropList($files)"]],
+    local script = string.format(
+        "Add-Type -AssemblyName System.Windows.Forms; $files = New-Object System.Collections.Specialized.StringCollection; $files.Add('%s'); [System.Windows.Forms.Clipboard]::SetFileDropList($files)",
         ps_path
     )
 
-    local output = vim.fn.system(cmd)
+    local output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     if vim.v.shell_error == 0 then
         print("Copied file to system clipboard (Explorer compatible): " .. path)
     else
@@ -97,12 +97,8 @@ local function cut_node_content()
         "Add-Type -AssemblyName System.Windows.Forms; $files = New-Object System.Collections.Specialized.StringCollection; $files.Add('%s'); $data = New-Object System.Windows.Forms.DataObject; $data.SetFileDropList($files); $ms = New-Object System.IO.MemoryStream; $ms.Write([byte[]](2,0,0,0), 0, 4); $data.SetData('Preferred DropEffect', $ms); [System.Windows.Forms.Clipboard]::SetDataObject($data, $true)",
         ps_path
     )
-    local cmd = string.format(
-        'powershell -NoProfile -Command "%s"',
-        script:gsub('"', '""')
-    )
 
-    local output = vim.fn.system(cmd)
+    local output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     if vim.v.shell_error == 0 then
         print(
             "Marked for cut in system clipboard (Explorer compatible): " .. path
@@ -194,22 +190,25 @@ local function paste_node()
         return
     end
 
-    local cmd
+    local output
     if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
+        local script
         if last_op == "cut" then
-            cmd = string.format(
-                "powershell -NoProfile -Command \"Move-Item -Path '%s' -Destination '%s' -Force\"",
+            script = string.format(
+                "Move-Item -Path '%s' -Destination '%s' -Force",
                 sourcePath:gsub("'", "''"),
                 targetPath:gsub("'", "''")
             )
         else
-            cmd = string.format(
-                "powershell -NoProfile -Command \"Copy-Item -Path '%s' -Destination '%s' -Recurse\"",
+            script = string.format(
+                "Copy-Item -Path '%s' -Destination '%s' -Recurse",
                 sourcePath:gsub("'", "''"),
                 targetPath:gsub("'", "''")
             )
         end
+        output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     else
+        local cmd
         if last_op == "cut" then
             cmd = string.format(
                 'mv "%s" "%s"',
@@ -223,9 +222,9 @@ local function paste_node()
                 targetPath:gsub('"', '\\"')
             )
         end
+        output = vim.fn.system(cmd)
     end
 
-    local output = vim.fn.system(cmd)
     if vim.v.shell_error == 0 then
         if last_op == "cut" then
             print("Moved to " .. targetPath)
@@ -258,7 +257,7 @@ local function paste_system_clipboard_content()
     end
 
     local timestamp = vim.fn.strftime("%Y%m%d_%H%M%S")
-    local cmd = ""
+    local output
 
     if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
         local destDir_ps = destDir:gsub("'", "''")
@@ -268,26 +267,27 @@ local function paste_system_clipboard_content()
             timestamp,
             timestamp
         )
-        cmd = string.format('powershell -NoProfile -Command "%s"', script)
+        output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     elseif vim.fn.has("mac") == 1 or vim.fn.has("macunix") == 1 then
         local destDir_sh = vim.fn.escape(destDir, "'")
-        cmd = string.format(
+        local cmd = string.format(
             [[sh -c 'if pbpaste | grep -q "^/"; then for file in $(pbpaste); do cp -r "$file" '"'%s'"'/ 2>/dev/null; done; echo "Copied paths"; else pbpaste > '"'%s/clipboard_text_%s.txt'"'; echo "Saved text"; fi']],
             destDir_sh,
             destDir_sh,
             timestamp
         )
+        output = vim.fn.system(cmd)
     else
         local destDir_sh = vim.fn.escape(destDir, "'")
-        cmd = string.format(
+        local cmd = string.format(
             [[sh -c 'if xclip -selection clipboard -o | grep -q "^/"; then for file in $(xclip -selection clipboard -o); do cp -r "$file" '"'%s'"'/ 2>/dev/null; done; echo "Copied paths"; else xclip -selection clipboard -o > '"'%s/clipboard_text_%s.txt'"'; echo "Saved text"; fi']],
             destDir_sh,
             destDir_sh,
             timestamp
         )
+        output = vim.fn.system(cmd)
     end
 
-    local output = vim.fn.system(cmd)
     print(output)
 
     api.tree.reload()
