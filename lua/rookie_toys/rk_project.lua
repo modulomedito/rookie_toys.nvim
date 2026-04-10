@@ -129,9 +129,10 @@ function M.open_selected_project()
         -- assuming rooter is configured globally or through a different lua module if necessary.
         -- If we needed to call rookie_rooter#Lock we could use vim.fn['rookie_rooter#Lock'](time)
 
-        if has_tree then
-            local status, api = pcall(require, "nvim-tree.api")
-            if status then
+        local status, api = pcall(require, "nvim-tree.api")
+        if status then
+            api.tree.change_root(prj.path)
+            if has_tree then
                 api.tree.open({ path = prj.path })
             end
         end
