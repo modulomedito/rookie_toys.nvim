@@ -11,10 +11,7 @@ function M.setup()
             c = { { "uncrustify", "clang-format" } },
             cpp = { { "uncrustify", "clang-format" } },
         },
-        format_on_save = {
-            timeout_ms = 500,
-            lsp_fallback = true,
-        },
+        format_on_save = false,
     })
 
     vim.keymap.set({ "n", "v" }, "<M-S-f>", function()
