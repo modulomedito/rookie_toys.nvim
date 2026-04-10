@@ -307,31 +307,31 @@ local function my_on_attach(bufnr)
 
     vim.keymap.set(
         "n",
-        "<leader><leader>c",
+        "<leader>mc",
         copy_node_path,
         opts("Copy node path")
     )
     vim.keymap.set(
         "n",
-        "<leader><leader>v",
+        "<leader>mv",
         paste_node,
         opts("Rookie nvim-tree: Paste node")
     )
     vim.keymap.set(
         "n",
-        "<leader><leader>R",
+        "<leader>mR",
         run_executable_detached,
         opts("Run executable detached")
     )
     vim.keymap.set(
         "n",
-        "<leader><leader>C",
+        "<leader>mC",
         copy_node_content,
         opts("Copy node content to clipboard")
     )
     vim.keymap.set(
         "n",
-        "<leader><leader>P",
+        "<leader>mP",
         paste_system_clipboard_content,
         opts("Paste system clipboard content")
     )
