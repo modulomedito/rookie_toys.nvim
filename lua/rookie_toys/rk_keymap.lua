@@ -67,14 +67,6 @@ function M.setup()
     vim.keymap.set("n", "<leader><C-q>", ":tabclose<CR>", {
         silent = true,
     })
-    vim.keymap.set(
-        "n",
-        "<C-s>",
-        "m6:%s/\\s\\+$//e<CR>:lua vim.lsp.buf.format()<CR>:w<CR>`6zz:noh<CR>",
-        {
-            silent = true,
-        }
-    )
     vim.keymap.set("n", "<C-w>i", "gt", {
         silent = true,
     })

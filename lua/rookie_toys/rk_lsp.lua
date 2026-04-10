@@ -218,8 +218,13 @@ function M.setup()
                 { desc = "LSP: [G]oto [R]eferences", buffer = ev.buf }
             )
             vim.keymap.set("n", "<leader>f", function()
-                vim.lsp.buf.format({ async = true })
-            end, { desc = "LSP: [F]ormat buffer", buffer = ev.buf })
+                local ok, conform = pcall(require, "conform")
+                if ok then
+                    conform.format({ lsp_fallback = true, async = true })
+                else
+                    vim.lsp.buf.format({ async = true })
+                end
+            end, { desc = "Format buffer (conform)", buffer = ev.buf })
         end,
     })
 

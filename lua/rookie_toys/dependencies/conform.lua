@@ -8,8 +8,8 @@ function M.setup()
 
     conform.setup({
         formatters_by_ft = {
-            c = { { "uncrustify", "clang-format" } },
-            cpp = { { "uncrustify", "clang-format" } },
+            c = { "uncrustify", "clang-format", stop_after_first = true },
+            cpp = { "uncrustify", "clang-format", stop_after_first = true },
         },
         format_on_save = false,
     })
@@ -22,6 +22,23 @@ function M.setup()
         })
         vim.api.nvim_input("<Esc>")
     end, { silent = true, desc = "Format file or range (conform)" })
+
+    vim.keymap.set("n", "<C-s>", function()
+        vim.cmd("normal! m6")
+        vim.cmd("%s/\\s\\+$//e")
+        local ok, conform = pcall(require, "conform")
+        if ok then
+            conform.format({ lsp_fallback = true, async = false })
+        else
+            vim.lsp.buf.format()
+        end
+        vim.cmd("w")
+        vim.cmd("normal! `6zz")
+        vim.cmd("noh")
+    end, {
+        silent = true,
+        desc = "Format and save (conform)",
+    })
 end
 
 return M
