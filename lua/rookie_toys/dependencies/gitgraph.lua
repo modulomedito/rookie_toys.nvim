@@ -35,8 +35,13 @@ function M.draw_gitgraph()
     local fugitive_win = vim.fn.bufwinid(fugitive_buf)
     if fugitive_win ~= -1 then
         vim.api.nvim_set_current_win(fugitive_win)
+    else
+        vim.cmd("G")
+        vim.schedule(function()
+            M.draw_gitgraph()
+        end)
+        return
     end
-    vim.cmd("G")
 
     local gitgraph_buf = -1
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
