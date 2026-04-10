@@ -29,18 +29,16 @@ function M.draw_gitgraph()
             M.draw_gitgraph()
         end)
         return
-    end
-
-    -- Focus fugitive window if it exists, otherwise open it
-    local fugitive_win = vim.fn.bufwinid(fugitive_buf)
-    if fugitive_win ~= -1 then
-        vim.api.nvim_set_current_win(fugitive_win)
     else
+        -- Focus fugitive window if it exists, otherwise open it
+        local fugitive_win = vim.fn.bufwinid(fugitive_buf)
+        if fugitive_win ~= -1 then
+            vim.api.nvim_set_current_win(fugitive_win)
+        else
+            vim.api.nvim_set_current_buf(fugitive_buf)
+        end
+        -- Refresh fugitive
         vim.cmd("G")
-        vim.schedule(function()
-            M.draw_gitgraph()
-        end)
-        return
     end
 
     local gitgraph_buf = -1
