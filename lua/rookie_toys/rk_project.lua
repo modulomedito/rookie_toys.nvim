@@ -71,7 +71,7 @@ local function set_quickfix(projects)
     for idx, p in ipairs(projects) do
         local extra_space = (idx >= 0 and idx <= 9) and " " or ""
         local text = string.format(
-            "%-" .. w .. "s" .. extra_space .. " | %s",
+            extra_space .. "%-" .. w .. "s | %s",
             p.name,
             p.path
         )
