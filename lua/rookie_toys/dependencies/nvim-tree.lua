@@ -381,7 +381,7 @@ local function my_on_attach(bufnr)
             if node.type ~= "directory" then
                 path = vim.fn.fnamemodify(path, ":h")
             end
-            vim.cmd("cd " .. vim.fn.fnameescape(path))
+            vim.api.nvim_set_current_dir(path)
             api.tree.change_root(path)
             print("CWD and nvim-tree root changed to: " .. path)
         end
