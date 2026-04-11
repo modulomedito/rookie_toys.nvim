@@ -99,7 +99,7 @@ function M.setup()
     })
 
     vim.keymap.set("n", "K", "i<CR><Esc>")
-    vim.keymap.set("n", "O", "O<Space><BS><Esc>")
+    vim.keymap.set("n", "O", "O<BS><Esc>")
     vim.keymap.set("n", "go", '"0yi):!start <C-r>0<CR>')
     vim.keymap.set("n", "j", "gj")
     vim.keymap.set("n", "k", "gk")
