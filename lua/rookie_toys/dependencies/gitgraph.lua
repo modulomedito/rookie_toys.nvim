@@ -1,17 +1,27 @@
 local M = {}
 
 function M.open_gitgraph()
+    local timed_out = false
     vim.notify("Git fetching...", vim.log.levels.INFO)
-    vim.fn.jobstart({ "git", "fetch" }, {
+    local job_id = vim.fn.jobstart({ "git", "fetch" }, {
         on_exit = function(_, exit_code)
             if exit_code == 0 then
                 vim.notify("Git fetch completed", vim.log.levels.INFO)
-            else
+            elseif not timed_out then
                 vim.notify("Git fetch failed", vim.log.levels.WARN)
             end
             M.draw_gitgraph()
         end,
     })
+
+    -- 200ms timeout
+    vim.defer_fn(function()
+        if vim.fn.jobwait({ job_id }, 0)[1] == -1 then
+            timed_out = true
+            vim.fn.jobstop(job_id)
+            vim.notify("Git fetch timed out, showing graph", vim.log.levels.INFO)
+        end
+    end, 200)
 end
 
 function M.draw_gitgraph()
