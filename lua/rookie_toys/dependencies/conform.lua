@@ -17,6 +17,11 @@ function M.setup()
                 "clang-format",
                 "uncrustify",
                 stop_after_first = true
+            },
+            markdown = {
+                "prettier",
+                "markdownlint",
+                stop_after_first = true
             }
         },
         format_on_save = false
