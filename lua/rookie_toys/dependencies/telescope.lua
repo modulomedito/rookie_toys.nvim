@@ -2,7 +2,7 @@ local M = {}
 
 -- Search state
 local search_opts = {
-    case_sensitive = true,
+    case_sensitive = false,
     whole_word = false,
     is_regex = false,
 }
