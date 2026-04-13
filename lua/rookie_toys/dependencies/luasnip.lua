@@ -192,6 +192,7 @@ function M.setup()
             "/// @details",
             "",
             "// INCLUDE",
+            "",
             '#include "',
         }),
         f(get_filename_no_ext),
