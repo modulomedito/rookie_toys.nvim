@@ -135,7 +135,7 @@ function M.setup()
     vim.keymap.set("v", "y", "ygv<Esc>")
 
     -- Select mode
-    vim.keymap.set("x", "p", '"_dP')
+    vim.keymap.set("x", "p", 'P')
 
     -- Git obs mapping
     vim.keymap.set("n", "<leader>obs", function()
