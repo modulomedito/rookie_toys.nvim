@@ -530,6 +530,11 @@ function M.setup()
     end, { desc = "Live Grep with togglable VS Code like flags" })
 
     vim.api.nvim_create_user_command("RkGlobalReplace", function()
+        -- Ensure case on, regex off, word off
+        search_opts.case_sensitive = true
+        search_opts.is_regex = false
+        search_opts.whole_word = false
+
         local search_text = vim.fn.expand("<cword>")
         if search_text ~= "" then
             apply_global_replace(search_text)
@@ -569,6 +574,11 @@ function M.setup()
     )
 
     vim.keymap.set("v", "<leader><F2>", function()
+        -- Ensure case on, regex off, word off
+        search_opts.case_sensitive = true
+        search_opts.is_regex = false
+        search_opts.whole_word = false
+
         local saved_reg = vim.fn.getreg("v")
         vim.cmd('noau normal! "vy')
         local text = vim.fn.getreg("v")
