@@ -2,7 +2,7 @@ local M = {}
 
 -- Search state
 local search_opts = {
-    case_sensitive = false,
+    case_sensitive = true,
     whole_word = false,
     is_regex = false,
 }
@@ -530,18 +530,14 @@ function M.setup()
     end, { desc = "Live Grep with togglable VS Code like flags" })
 
     vim.api.nvim_create_user_command("RkGlobalReplace", function()
-        -- Ensure case on, regex off, word off
+        -- Use preferred defaults (Case On, Regex Off, Word Off)
         search_opts.case_sensitive = true
         search_opts.is_regex = false
         search_opts.whole_word = false
 
         local search_text = vim.fn.expand("<cword>")
-        if search_text ~= "" then
-            apply_global_replace(search_text)
-        else
-            -- If no word under cursor, fallback to search picker
-            live_grep_with_flags("", true)
-        end
+        -- Show search picker first to let user choose parameters
+        live_grep_with_flags(search_text, true)
     end, { desc = "Global Replace with togglable VS Code like flags" })
 
     vim.api.nvim_create_user_command("RkGlobalReplaceUndo", function()
@@ -574,7 +570,7 @@ function M.setup()
     )
 
     vim.keymap.set("v", "<leader><F2>", function()
-        -- Ensure case on, regex off, word off
+        -- Use preferred defaults (Case On, Regex Off, Word Off)
         search_opts.case_sensitive = true
         search_opts.is_regex = false
         search_opts.whole_word = false
@@ -585,11 +581,8 @@ function M.setup()
         vim.fn.setreg("v", saved_reg)
         text = string.gsub(text, "\n", "")
 
-        if text ~= "" then
-            apply_global_replace(text)
-        else
-            live_grep_with_flags("", true)
-        end
+        -- Show search picker first to let user choose parameters
+        live_grep_with_flags(text, true)
     end, {
         desc = "Global Replace Selection (Rookie Toys)",
     })
