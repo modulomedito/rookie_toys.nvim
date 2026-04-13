@@ -22,12 +22,12 @@ function M.setup()
         cabbrev Gcherry G cherry-pick <C-r><C-w>\|RkGitGraph
         cabbrev Gclr G clean -d -f
         cabbrev Gdell silent G branch -d\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
-        cabbrev Gdelr silent G push origin --delete\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
-        cabbrev Gf silent G fetch\|RkGitGraph
+        cabbrev Gdelr RkGit push origin --delete
+        cabbrev Gf RkGit fetch
         cabbrev Gm silent G merge --ff <C-r><C-w>\|RkGitGraph
         cabbrev Gnew silent G checkout -b\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
-        cabbrev Gpl silent G pull\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
-        cabbrev Gps G push\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+        cabbrev Gpl RkGit pull
+        cabbrev Gps RkGit push
         cabbrev Gr G rebase <C-r><C-w>\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
         cabbrev Gstashpo silent G stash pop\|RkGitGraph
         cabbrev Gstashpu silent G stash push --include-untracked\|RkGitGraph

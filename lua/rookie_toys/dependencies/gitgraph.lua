@@ -21,7 +21,26 @@ function M.open_gitgraph()
             vim.fn.jobstop(job_id)
             vim.notify("Git fetch timed out, showing graph", vim.log.levels.INFO)
         end
-    end, 200)
+    end, 1000)
+end
+
+function M.async_git(args, success_msg)
+    local cmd_str = table.concat(args, " ")
+    vim.notify("Git " .. cmd_str .. "...", vim.log.levels.INFO)
+    vim.fn.jobstart(vim.list_extend({ "git" }, args), {
+        on_exit = function(_, exit_code)
+            if exit_code == 0 then
+                if success_msg then
+                    vim.notify(success_msg, vim.log.levels.INFO)
+                else
+                    vim.notify("Git " .. cmd_str .. " completed", vim.log.levels.INFO)
+                end
+                M.draw_gitgraph()
+            else
+                vim.notify("Git " .. cmd_str .. " failed", vim.log.levels.WARN)
+            end
+        end,
+    })
 end
 
 function M.draw_gitgraph()
@@ -135,6 +154,14 @@ function M.setup()
     vim.api.nvim_create_user_command("Gg", function()
         M.open_gitgraph()
     end, { desc = "Rookie GitGraph - Draw" })
+
+    vim.api.nvim_create_user_command("RkGit", function(opts)
+        if #opts.fargs == 0 then
+            vim.notify("Usage: RkGit <git command>", vim.log.levels.ERROR)
+            return
+        end
+        M.async_git(opts.fargs)
+    end, { nargs = "*", complete = "shellcmd" })
 end
 
 return M
