@@ -67,11 +67,25 @@ local function apply_global_replace(search_text)
     local action_state = require("telescope.actions.state")
     local putils = require("telescope.previewers.utils")
 
-    -- Build neovim substitute command pattern
-    local nv_search = search_text
-    if not search_opts.is_regex then
-        nv_search = vim.fn.escape(nv_search, "\\/.*$^~[]")
+    local function build_substitute_search(text)
+        if search_opts.is_regex then
+            return text
+        end
+        -- Regex OFF: escape Vim pattern metacharacters + Ex command delimiters.
+        return vim.fn.escape(text, [[\/.*$^~[]|"]])
     end
+
+    local function build_substitute_replace(text)
+        if search_opts.is_regex then
+            -- Keep regex replacement features (e.g. \1) in regex mode.
+            return vim.fn.escape(text, [[/&|"]])
+        end
+        -- Regex OFF: treat replacement as plain text.
+        return vim.fn.escape(text, [[\/&~|"]])
+    end
+
+    -- Build neovim substitute command pattern
+    local nv_search = build_substitute_search(search_text)
     if search_opts.whole_word then
         nv_search = "\\<" .. nv_search .. "\\>"
     end
@@ -85,7 +99,7 @@ local function apply_global_replace(search_text)
         title = "Replace Preview",
         define_preview = function(self, entry, status)
             local current_replace = action_state.get_current_line()
-            local nv_replace = vim.fn.escape(current_replace, "\\/&")
+            local nv_replace = build_substitute_replace(current_replace)
 
             local lines = vim.fn.readfile(entry.filename)
             vim.bo[self.state.bufnr].modifiable = true
@@ -219,8 +233,9 @@ local function apply_global_replace(search_text)
                                     -- Fetch current replace string
                                     local current_replace =
                                         action_state.get_current_line()
-                                    local nv_replace =
-                                        vim.fn.escape(current_replace, "\\/&")
+                                    local nv_replace = build_substitute_replace(
+                                        current_replace
+                                    )
 
                                     -- Refresh preview buffer
                                     local lines =
@@ -360,7 +375,8 @@ local function apply_global_replace(search_text)
                         lines = output,
                     })
 
-                    local nv_replace_final = vim.fn.escape(replace_text, "\\/&")
+                    local nv_replace_final =
+                        build_substitute_replace(replace_text)
                     local cmd = string.format(
                         "cfdo %%s/%s/%s/ge | update",
                         nv_search,
