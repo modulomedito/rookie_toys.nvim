@@ -163,9 +163,17 @@ local function apply_global_replace(search_text)
         end,
     })
 
+    local prompt_title = string.format(
+        "Replace: %s (ca[S]e:%s, [W]ord:%s, [R]egex:%s)",
+        search_text,
+        search_opts.case_sensitive and "On" or "Off",
+        search_opts.whole_word and "On" or "Off",
+        search_opts.is_regex and "On" or "Off"
+    )
+
     pickers
         .new({}, {
-            prompt_title = "Replace: " .. search_text,
+            prompt_title = prompt_title,
             default_text = search_text,
             finder = finders.new_table({
                 results = output,
