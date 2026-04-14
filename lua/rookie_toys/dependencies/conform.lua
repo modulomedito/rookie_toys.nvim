@@ -24,9 +24,9 @@ function M.setup()
                 stop_after_first = true
             },
             python = {
-                "prettier",
-                "isort",
-                "black"
+                "autopep8",
+                "black",
+                "isort"
             }
         },
         format_on_save = false
