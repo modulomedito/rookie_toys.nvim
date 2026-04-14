@@ -53,9 +53,7 @@ local function apply_global_replace(search_text)
     table.insert(rg_cmd_parts, search_text)
     table.insert(rg_cmd_parts, ".")
 
-    local rg_cmd = table.concat(rg_cmd_parts, " ")
-
-    local output = vim.fn.systemlist(rg_cmd)
+    local output = vim.fn.systemlist(rg_cmd_parts)
     if vim.v.shell_error ~= 0 and #output == 0 then
         print("No matches found for: " .. search_text)
         return
