@@ -22,6 +22,11 @@ function M.setup()
                 "prettier",
                 "markdownlint",
                 stop_after_first = true
+            },
+            python = {
+                "prettier",
+                "isort",
+                "black"
             }
         },
         format_on_save = false
