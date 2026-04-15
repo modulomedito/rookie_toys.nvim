@@ -11,6 +11,7 @@ function M.setup()
     require("rookie_toys.dependencies.luasnip").setup()
     require("rookie_toys.dependencies.gitsigns").setup()
     require("rookie_toys.dependencies.codecompanion").setup()
+    require("rookie_toys.dependencies.imselect").setup()
 end
 
 return M

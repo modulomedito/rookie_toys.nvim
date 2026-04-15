@@ -31,6 +31,7 @@ Use lazy.nvim to install this plugin.
     'MeanderingProgrammer/render-markdown.nvim',
     'HakonHarnes/img-clip.nvim',
     'MagicDuck/grug-far.nvim',
+    'keaising/im-select.nvim',
   },
 },
 ```
