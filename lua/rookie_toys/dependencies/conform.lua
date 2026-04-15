@@ -47,6 +47,9 @@ function M.setup()
     vim.keymap.set("n", "<C-s>", function()
         vim.cmd("normal! m6")
         vim.cmd("%s/\\s\\+$//e")
+        if vim.bo.filetype == "markdown" then
+            vim.cmd("PanguAll")
+        end
         local ok, conform = pcall(require, "conform")
         if ok then
             conform.format({
