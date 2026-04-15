@@ -30,6 +30,7 @@ Use lazy.nvim to install this plugin.
     'nvim-treesitter/nvim-treesitter',
     'MeanderingProgrammer/render-markdown.nvim',
     'HakonHarnes/img-clip.nvim',
+    'MagicDuck/grug-far.nvim',
   },
 },
 ```

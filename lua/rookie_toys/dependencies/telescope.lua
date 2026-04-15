@@ -84,8 +84,245 @@ local function apply_global_replace(search_text)
         return vim.fn.escape(text, [[\/&~|"]])
     end
 
+    local preview_ns_id = vim.api.nvim_create_namespace("rookie_toys_replace")
+    local preview_info_ns_id =
+        vim.api.nvim_create_namespace("rookie_toys_replace_info")
+    local file_cache = {}
+    local preview_state = {}
+    local nv_search
+
+    local function get_file_lines(filename)
+        if file_cache[filename] then
+            return file_cache[filename]
+        end
+        local ok, lines = pcall(vim.fn.readfile, filename)
+        if not ok then
+            return {}
+        end
+        file_cache[filename] = lines
+        return lines
+    end
+
+    local function sanitize_preview_text(text)
+        return tostring(text):gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t")
+    end
+
+    local function build_regex_group_preview(line_text, replace_text)
+        if not search_opts.is_regex then
+            return nil
+        end
+
+        local referenced_groups = {}
+        for ref in replace_text:gmatch("\\(%d)") do
+            referenced_groups[tonumber(ref)] = true
+        end
+        if vim.tbl_isempty(referenced_groups) then
+            return nil
+        end
+
+        local ok_match, matchlist = pcall(vim.fn.matchlist, line_text, nv_search)
+        if not ok_match then
+            return "Regex preview: invalid pattern for this line."
+        end
+        if type(matchlist) ~= "table" or #matchlist == 0 then
+            return "Regex preview: no match on the selected line."
+        end
+
+        local group_parts = {}
+        local missing_groups = {}
+        local ordered_refs = {}
+        for idx, _ in pairs(referenced_groups) do
+            table.insert(ordered_refs, idx)
+        end
+        table.sort(ordered_refs)
+
+        for _, ref in ipairs(ordered_refs) do
+            local value = matchlist[ref + 1]
+            if value == nil then
+                value = ""
+                table.insert(missing_groups, "\\" .. ref)
+            end
+            table.insert(
+                group_parts,
+                string.format("\\%d='%s'", ref, sanitize_preview_text(value))
+            )
+        end
+
+        -- Preserve escaped backslashes, then resolve backrefs.
+        local marker = "\1"
+        local rendered = replace_text:gsub("\\\\", marker):gsub(
+            "\\(%d)",
+            function(digit)
+                local value = matchlist[tonumber(digit) + 1]
+                if value == nil then
+                    return ""
+                end
+                return value
+            end
+        ):gsub(marker, "\\")
+
+        local message = "Regex groups: "
+            .. table.concat(group_parts, ", ")
+            .. " -> '"
+            .. sanitize_preview_text(rendered)
+            .. "'"
+
+        if #missing_groups > 0 then
+            message = message
+                .. " (missing "
+                .. table.concat(missing_groups, ", ")
+                .. " => '')"
+        end
+
+        return message
+    end
+
+    local function render_replace_preview(bufnr, entry, replace_text, winid)
+        if not vim.api.nvim_buf_is_valid(bufnr) then
+            return
+        end
+
+        if type(entry) ~= "table" then
+            return
+        end
+        if type(entry.filename) ~= "string" or entry.filename == "" then
+            return
+        end
+        if type(entry.lnum) ~= "number" or entry.lnum < 1 then
+            return
+        end
+
+        local source_lines = get_file_lines(entry.filename)
+        if #source_lines == 0 then
+            return
+        end
+        local target_lnum = math.min(entry.lnum, #source_lines)
+        local original_line = source_lines[target_lnum] or ""
+        local nv_replace = build_substitute_replace(replace_text)
+        local substituted_line = original_line
+        local regex_preview_msg = nil
+        local substitution_error = nil
+
+        if replace_text ~= "" then
+            local ok_sub, result =
+                pcall(vim.fn.substitute, original_line, nv_search, nv_replace, "g")
+            if ok_sub then
+                substituted_line = result
+            else
+                substitution_error = tostring(result)
+            end
+            regex_preview_msg =
+                build_regex_group_preview(original_line, replace_text)
+        end
+
+        local state = preview_state[bufnr]
+        local reload_buffer = not state or state.filename ~= entry.filename
+
+        vim.bo[bufnr].modifiable = true
+        if reload_buffer then
+            vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, source_lines)
+            preview_state[bufnr] = { filename = entry.filename, last_lnum = nil }
+            state = preview_state[bufnr]
+
+            local ft = require("plenary.filetype").detect(entry.filename) or "text"
+            putils.highlighter(bufnr, ft, {})
+        end
+
+        if state.last_lnum and state.last_lnum ~= entry.lnum then
+            local restore_idx = math.min(state.last_lnum, #source_lines)
+            local restore_line = source_lines[restore_idx] or ""
+            vim.api.nvim_buf_set_lines(
+                bufnr,
+                restore_idx - 1,
+                restore_idx,
+                false,
+                { restore_line }
+            )
+        end
+
+        vim.api.nvim_buf_set_lines(
+            bufnr,
+            target_lnum - 1,
+            target_lnum,
+            false,
+            { substituted_line }
+        )
+        state.last_lnum = target_lnum
+        vim.bo[bufnr].modifiable = false
+
+        if winid and vim.api.nvim_win_is_valid(winid) then
+            pcall(vim.api.nvim_win_set_cursor, winid, { target_lnum, 0 })
+            pcall(vim.api.nvim_win_call, winid, function()
+                vim.cmd("normal! zz")
+            end)
+        end
+
+        vim.api.nvim_buf_clear_namespace(bufnr, preview_ns_id, 0, -1)
+        vim.api.nvim_buf_clear_namespace(bufnr, preview_info_ns_id, 0, -1)
+        vim.api.nvim_buf_add_highlight(
+            bufnr,
+            preview_ns_id,
+            "CursorLine",
+            target_lnum - 1,
+            0,
+            -1
+        )
+
+        if not search_opts.is_regex and replace_text ~= "" and substituted_line ~= "" then
+            local start_idx = 1
+            while true do
+                local i, j =
+                    string.find(substituted_line, replace_text, start_idx, true)
+                if not i then
+                    break
+                end
+                vim.api.nvim_buf_add_highlight(
+                    bufnr,
+                    preview_ns_id,
+                    "Search",
+                    target_lnum - 1,
+                    i - 1,
+                    j
+                )
+                start_idx = j + 1
+            end
+        end
+
+        if substitution_error then
+            vim.api.nvim_buf_set_extmark(
+                bufnr,
+                preview_info_ns_id,
+                target_lnum - 1,
+                0,
+                {
+                    virt_text = {
+                        {
+                            "Regex preview error: " .. substitution_error,
+                            "DiagnosticError",
+                        },
+                    },
+                    virt_text_pos = "eol",
+                }
+            )
+            return
+        end
+
+        if regex_preview_msg then
+            vim.api.nvim_buf_set_extmark(
+                bufnr,
+                preview_info_ns_id,
+                target_lnum - 1,
+                0,
+                {
+                    virt_text = { { regex_preview_msg, "Comment" } },
+                    virt_text_pos = "eol",
+                }
+            )
+        end
+    end
+
     -- Build neovim substitute command pattern
-    local nv_search = build_substitute_search(search_text)
+    nv_search = build_substitute_search(search_text)
     if search_opts.whole_word then
         nv_search = "\\<" .. nv_search .. "\\>"
     end
@@ -98,80 +335,19 @@ local function apply_global_replace(search_text)
     local replace_previewer = previewers.new_buffer_previewer({
         title = "Replace Preview",
         define_preview = function(self, entry, status)
+            if not self or not self.state or not self.state.bufnr then
+                return
+            end
+            if type(entry) ~= "table" then
+                return
+            end
             local current_replace = action_state.get_current_line()
-            local nv_replace = build_substitute_replace(current_replace)
-
-            local lines = vim.fn.readfile(entry.filename)
-            vim.bo[self.state.bufnr].modifiable = true
-            vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
-
-            vim.api.nvim_buf_call(self.state.bufnr, function()
-                pcall(
-                    vim.cmd,
-                    string.format("silent! %%s/%s/%s/ge", nv_search, nv_replace)
-                )
-            end)
-            vim.bo[self.state.bufnr].modifiable = false
-
-            local ft = require("plenary.filetype").detect(entry.filename)
-                or "text"
-            putils.highlighter(self.state.bufnr, ft, {})
-
-            local winid = status.preview_win or self.state.winid
-            if winid and vim.api.nvim_win_is_valid(winid) then
-                -- Move cursor to target line and center it
-                vim.schedule(function()
-                    pcall(vim.api.nvim_win_set_cursor, winid, { entry.lnum, 0 })
-                    pcall(vim.api.nvim_win_call, winid, function()
-                        vim.cmd("normal! zz")
-                    end)
-                end)
-            end
-
-            -- Highlight the line background slightly to indicate it's the target line
-            local ns_id = vim.api.nvim_create_namespace("rookie_toys_replace")
-            vim.api.nvim_buf_clear_namespace(self.state.bufnr, ns_id, 0, -1)
-            vim.api.nvim_buf_add_highlight(
+            render_replace_preview(
                 self.state.bufnr,
-                ns_id,
-                "CursorLine",
-                entry.lnum - 1,
-                0,
-                -1
+                entry,
+                current_replace,
+                (status and status.preview_win) or self.state.winid
             )
-
-            -- Highlight the replaced text specifically
-            if current_replace ~= "" then
-                local replaced_line = vim.api.nvim_buf_get_lines(
-                    self.state.bufnr,
-                    entry.lnum - 1,
-                    entry.lnum,
-                    false
-                )[1]
-                if replaced_line then
-                    local start_idx = 1
-                    while true do
-                        local i, j = string.find(
-                            replaced_line,
-                            current_replace,
-                            start_idx,
-                            true
-                        )
-                        if not i then
-                            break
-                        end
-                        vim.api.nvim_buf_add_highlight(
-                            self.state.bufnr,
-                            ns_id,
-                            "Search",
-                            entry.lnum - 1,
-                            i - 1,
-                            j
-                        )
-                        start_idx = j + 1
-                    end
-                end
-            end
         end,
     })
 
@@ -230,131 +406,16 @@ local function apply_global_replace(search_text)
                             then
                                 -- Schedule the preview update so we don't interfere with Telescope's internal state machine
                                 vim.schedule(function()
-                                    -- Fetch current replace string
-                                    local current_replace =
-                                        action_state.get_current_line()
-                                    local nv_replace = build_substitute_replace(
-                                        current_replace
-                                    )
-
-                                    -- Refresh preview buffer
-                                    local lines =
-                                        vim.fn.readfile(entry.filename)
                                     local picker_bufnr =
                                         picker.previewer.state.bufnr
-                                    -- Ensure buffer is still valid before operating on it
-                                    if
-                                        not vim.api.nvim_buf_is_valid(
-                                            picker_bufnr
-                                        )
-                                    then
-                                        return
-                                    end
-
-                                    vim.bo[picker_bufnr].modifiable = true
-                                    vim.api.nvim_buf_set_lines(
+                                    local current_replace =
+                                        action_state.get_current_line()
+                                    render_replace_preview(
                                         picker_bufnr,
-                                        0,
-                                        -1,
-                                        false,
-                                        lines
+                                        entry,
+                                        current_replace,
+                                        picker.preview_win
                                     )
-
-                                    -- Apply substitution to preview buffer
-                                    vim.api.nvim_buf_call(
-                                        picker_bufnr,
-                                        function()
-                                            pcall(
-                                                vim.cmd,
-                                                string.format(
-                                                    "silent! %%s/%s/%s/ge",
-                                                    nv_search,
-                                                    nv_replace
-                                                )
-                                            )
-                                        end
-                                    )
-                                    vim.bo[picker_bufnr].modifiable = false
-
-                                    -- Ensure cursor stays at the right line
-                                    local winid = picker.preview_win
-                                    if
-                                        winid
-                                        and vim.api.nvim_win_is_valid(winid)
-                                    then
-                                        pcall(
-                                            vim.api.nvim_win_set_cursor,
-                                            winid,
-                                            { entry.lnum, 0 }
-                                        )
-                                        pcall(
-                                            vim.api.nvim_win_call,
-                                            winid,
-                                            function()
-                                                vim.cmd("normal! zz")
-                                            end
-                                        )
-                                    end
-
-                                    -- Re-apply highlights
-                                    local ft = require("plenary.filetype").detect(
-                                        entry.filename
-                                    ) or "text"
-                                    putils.highlighter(picker_bufnr, ft, {})
-
-                                    local ns_id = vim.api.nvim_create_namespace(
-                                        "rookie_toys_replace"
-                                    )
-                                    vim.api.nvim_buf_clear_namespace(
-                                        picker_bufnr,
-                                        ns_id,
-                                        0,
-                                        -1
-                                    )
-
-                                    -- Highlight the line background slightly to indicate it's the target line
-                                    vim.api.nvim_buf_add_highlight(
-                                        picker_bufnr,
-                                        ns_id,
-                                        "CursorLine",
-                                        entry.lnum - 1,
-                                        0,
-                                        -1
-                                    )
-
-                                    -- Highlight the replaced text specifically
-                                    if current_replace ~= "" then
-                                        local replaced_line =
-                                            vim.api.nvim_buf_get_lines(
-                                                picker_bufnr,
-                                                entry.lnum - 1,
-                                                entry.lnum,
-                                                false
-                                            )[1]
-                                        if replaced_line then
-                                            local start_idx = 1
-                                            while true do
-                                                local i, j = string.find(
-                                                    replaced_line,
-                                                    current_replace,
-                                                    start_idx,
-                                                    true
-                                                )
-                                                if not i then
-                                                    break
-                                                end
-                                                vim.api.nvim_buf_add_highlight(
-                                                    picker_bufnr,
-                                                    ns_id,
-                                                    "Search",
-                                                    entry.lnum - 1,
-                                                    i - 1,
-                                                    j
-                                                )
-                                                start_idx = j + 1
-                                            end
-                                        end
-                                    end
                                 end)
                             end
                         end
@@ -583,39 +644,39 @@ function M.setup()
         live_grep_with_flags(text, false)
     end, { desc = "Rookie Live Grep (enhance telescope) from selection" })
 
-    -- Map <leader><F2> to RkGlobalReplace
-    vim.keymap.set(
-        "n",
-        "<leader><F2>",
-        "<cmd>RkGlobalReplace<CR>",
-        { desc = "Rookie Global Replace (enhance telescope)" }
-    )
+    -- -- Map <leader><F2> to RkGlobalReplace
+    -- vim.keymap.set(
+    --     "n",
+    --     "<leader><F2>",
+    --     "<cmd>RkGlobalReplace<CR>",
+    --     { desc = "Rookie Global Replace (enhance telescope)" }
+    -- )
 
-    vim.keymap.set("v", "<leader><F2>", function()
-        -- Use preferred defaults (Case On, Regex Off, Word Off)
-        search_opts.case_sensitive = true
-        search_opts.is_regex = false
-        search_opts.whole_word = false
+    -- vim.keymap.set("v", "<leader><F2>", function()
+    --     -- Use preferred defaults (Case On, Regex Off, Word Off)
+    --     search_opts.case_sensitive = true
+    --     search_opts.is_regex = false
+    --     search_opts.whole_word = false
 
-        local saved_reg = vim.fn.getreg("v")
-        vim.cmd('noau normal! "vy')
-        local text = vim.fn.getreg("v")
-        vim.fn.setreg("v", saved_reg)
-        text = string.gsub(text, "\n", "")
+    --     local saved_reg = vim.fn.getreg("v")
+    --     vim.cmd('noau normal! "vy')
+    --     local text = vim.fn.getreg("v")
+    --     vim.fn.setreg("v", saved_reg)
+    --     text = string.gsub(text, "\n", "")
 
-        -- Show search picker first to let user choose parameters
-        live_grep_with_flags(text, true)
-    end, {
-        desc = "Global Replace Selection (Rookie Toys)",
-    })
+    --     -- Show search picker first to let user choose parameters
+    --     live_grep_with_flags(text, true)
+    -- end, {
+    --     desc = "Global Replace Selection (Rookie Toys)",
+    -- })
 
-    -- Map <leader><leader><F2> to RkGlobalReplaceUndo
-    vim.keymap.set(
-        "n",
-        "<leader><leader><F2>",
-        "<cmd>RkGlobalReplaceUndo<CR>",
-        { desc = "Rookie Global Replace Undo" }
-    )
+    -- -- Map <leader><leader><F2> to RkGlobalReplaceUndo
+    -- vim.keymap.set(
+    --     "n",
+    --     "<leader><leader><F2>",
+    --     "<cmd>RkGlobalReplaceUndo<CR>",
+    --     { desc = "Rookie Global Replace Undo" }
+    -- )
 
     vim.keymap.set("n", "<C-p>", function()
         require("telescope.builtin").find_files({ cwd = vim.fn.getcwd() })

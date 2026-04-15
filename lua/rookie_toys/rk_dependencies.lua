@@ -3,6 +3,7 @@ local M = {}
 function M.setup()
     require("rookie_toys.dependencies.nvim-tree").setup()
     require("rookie_toys.dependencies.telescope").setup()
+    require("rookie_toys.dependencies.grugfar").setup()
     require("rookie_toys.dependencies.gitgraph").setup()
     require("rookie_toys.dependencies.conform").setup()
     require("rookie_toys.dependencies.mini").setup()
