@@ -10,6 +10,7 @@ function M.setup()
         iabbrev xfea ✨ feat():[#]<Left><Left><Left><Left>
         iabbrev xfix 🐞 fix():[#]<Left><Left><Left><Left>
         iabbrev xini 🎉 init():[#]<Left><Left><Left><Left>
+        iabbrev xper 🎈 perf():[#]<Left><Left><Left><Left>
         iabbrev xref 🦄 refactor():[#]<Left><Left><Left><Left>
         iabbrev xrev ↩ revert():[#]<Left><Left><Left><Left>
         iabbrev xsty 🌈 style():[#]<Left><Left><Left><Left>
