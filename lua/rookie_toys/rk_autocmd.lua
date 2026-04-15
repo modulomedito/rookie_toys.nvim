@@ -84,6 +84,7 @@ function M.setup()
             vim.opt_local.expandtab = true
             vim.opt_local.cindent = true -- Explicitly use standard C indentation
             vim.opt_local.indentexpr = "" -- Disable Treesitter's indent engine for C
+            vim.opt_local.textwidth = 100
         end,
     })
 
