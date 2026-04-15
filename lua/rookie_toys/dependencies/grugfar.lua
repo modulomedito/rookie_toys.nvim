@@ -1,12 +1,25 @@
 local M = {}
 
+local function normalize_selection_text(text)
+    text = text:gsub("\r", "")
+    text = text:gsub("\n$", "")
+    return text
+end
+
 local function get_visual_selection()
     local saved_reg = vim.fn.getreg("v")
     vim.cmd('noau normal! "vy')
     local text = vim.fn.getreg("v")
     vim.fn.setreg("v", saved_reg)
-    text = text:gsub("\n", "")
-    return text
+    return normalize_selection_text(text)
+end
+
+local function inject_default_replace_prefill(final_opts)
+    final_opts.prefills = final_opts.prefills or {}
+    if final_opts.prefills.search ~= nil and final_opts.prefills.replace == nil then
+        final_opts.prefills.replace = final_opts.prefills.search
+    end
+    return final_opts
 end
 
 local function open_grugfar(opts)
@@ -23,6 +36,7 @@ local function open_grugfar(opts)
         },
     }
     local final_opts = vim.tbl_deep_extend("force", base, opts or {})
+    final_opts = inject_default_replace_prefill(final_opts)
     grugfar.open(final_opts)
 end
 
