@@ -86,6 +86,16 @@ function M.setup()
             vim.opt_local.indentexpr = "" -- Disable Treesitter's indent engine for C
         end,
     })
+
+    local group_markdown =
+        vim.api.nvim_create_augroup("RkMarkdown", { clear = true })
+    vim.api.nvim_create_autocmd("FileType", {
+        group = group_markdown,
+        pattern = "markdown",
+        callback = function()
+            vim.opt_local.textwidth = 80
+        end,
+    })
 end
 
 return M
