@@ -32,6 +32,7 @@ Use lazy.nvim to install this plugin.
     'HakonHarnes/img-clip.nvim',
     'MagicDuck/grug-far.nvim',
     'keaising/im-select.nvim',
+    'tpope/vim-surround',
   },
 },
 ```
