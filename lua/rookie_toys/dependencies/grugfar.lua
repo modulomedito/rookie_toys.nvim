@@ -17,6 +17,7 @@ local function open_grugfar(opts)
     end
 
     local base = {
+        startInInsertMode = false,
         prefills = {
             paths = vim.fn.getcwd(),
         },
