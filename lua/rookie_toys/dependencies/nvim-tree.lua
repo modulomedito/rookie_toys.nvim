@@ -428,6 +428,7 @@ end
 
 function M.setup()
     -- Global mappings
+    vim.keymap.set("n", "<C-e>", ":NvimTreeFocus<CR>", { silent = true })
     vim.keymap.set("n", "<C-S-e>", ":NvimTreeFocus<CR>", { silent = true })
     vim.keymap.set("n", "<C-y>", ":NvimTreeToggle<CR>", { silent = true })
     vim.keymap.set(
