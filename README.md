@@ -33,6 +33,7 @@ Use lazy.nvim to install this plugin.
     'MagicDuck/grug-far.nvim',
     'keaising/im-select.nvim',
     'tpope/vim-surround',
+    'sphamba/smear-cursor.nvim',
   },
 },
 ```
