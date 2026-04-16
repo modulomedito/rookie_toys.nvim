@@ -68,7 +68,8 @@ local function copy_node_content()
         ps_path
     )
 
-    local output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
+    local output =
+        vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     if vim.v.shell_error == 0 then
         print("Copied file to system clipboard (Explorer compatible): " .. path)
     else
@@ -98,7 +99,8 @@ local function cut_node_content()
         ps_path
     )
 
-    local output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
+    local output =
+        vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     if vim.v.shell_error == 0 then
         print(
             "Marked for cut in system clipboard (Explorer compatible): " .. path
@@ -206,7 +208,8 @@ local function paste_node()
                 targetPath:gsub("'", "''")
             )
         end
-        output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
+        output =
+            vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     else
         local cmd
         if last_op == "cut" then
@@ -267,7 +270,8 @@ local function paste_system_clipboard_content()
             timestamp,
             timestamp
         )
-        output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
+        output =
+            vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     elseif vim.fn.has("mac") == 1 or vim.fn.has("macunix") == 1 then
         local destDir_sh = vim.fn.escape(destDir, "'")
         local cmd = string.format(
@@ -387,6 +391,7 @@ local function my_on_attach(bufnr)
         end
     end, opts("Change CWD and nvim-tree root to node"))
 
+    vim.keymap.set("n", "L", "$", opts("Move to line end"))
     vim.keymap.set("n", "<leader>mc", copy_node_path, opts("Copy node path"))
     vim.keymap.set("n", "<leader>mx", cut_node, opts("Cut node"))
     vim.keymap.set(
