@@ -25,15 +25,15 @@ Use lazy.nvim to install this plugin.
     't9md/vim-textmanip', -- Text movement
     -- 'vim-scripts/DrawIt', -- Draw ASCII art
     'tpope/vim-fugitive', -- Git wrapper
-    'olimorris/codecompanion.nvim',
-    'nvim-lua/plenary.nvim',
-    'nvim-treesitter/nvim-treesitter',
-    'MeanderingProgrammer/render-markdown.nvim',
-    'HakonHarnes/img-clip.nvim',
-    'MagicDuck/grug-far.nvim',
-    'keaising/im-select.nvim',
-    'tpope/vim-surround',
-    'sphamba/smear-cursor.nvim',
+    'olimorris/codecompanion.nvim', -- AI coding assistant
+    'nvim-lua/plenary.nvim', -- Lua utility functions
+    'nvim-treesitter/nvim-treesitter', -- Better syntax parsing/highlighting
+    'MeanderingProgrammer/render-markdown.nvim', -- Render markdown in buffers
+    'HakonHarnes/img-clip.nvim', -- Paste images from clipboard
+    'MagicDuck/grug-far.nvim', -- Search and replace UI
+    'keaising/im-select.nvim', -- Auto switch input method
+    'tpope/vim-surround', -- Edit surrounding characters
+    'sphamba/smear-cursor.nvim', -- Cursor trail animation
   },
 },
 ```
