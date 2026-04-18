@@ -108,41 +108,44 @@ function M.search_global_tags()
     end
     table.sort(taglist)
 
-    local sorted_tags = "\\#" .. table.concat(taglist, ".*\\#")
-    vim.api.nvim_echo({{'Sorted tags: ' .. sorted_tags, 'Normal'}}, false, {})
+    local pattern = "#" .. table.concat(taglist, ".*#")
+    vim.api.nvim_echo({{'Searching tags: ' .. pattern, 'Normal'}}, false, {})
 
-    if vim.fn.has('unix') == 1 then
-        vim.cmd("silent! grep '" .. sorted_tags .. "' .")
-    else
-        vim.cmd("silent! grep " .. sorted_tags .. " .")
+    local cmd = { "rg", "--vimgrep", "--color=never", pattern }
+    local output = vim.fn.systemlist(cmd)
+
+    if vim.v.shell_error > 1 then
+        vim.api.nvim_echo({{'Error running rg (is ripgrep installed?).', 'ErrorMsg'}}, false, {})
+        return
     end
 
-    local qf = vim.fn.getqflist()
-    if #qf > 0 then
-        local seen = {}
-        local merged = {}
-        for _, entry in ipairs(qf) do
-            local fname = entry.filename or ''
-            if fname == '' and entry.bufnr and entry.bufnr > 0 then
-                fname = vim.fn.bufname(entry.bufnr)
-            end
-            local key = fname .. ':' .. entry.lnum
-            if not seen[key] then
-                seen[key] = true
-                table.insert(merged, entry)
-            end
-        end
-
-        if #merged == 1 then
-            vim.fn.cursor(merged[1].lnum, 1)
-        else
-            vim.fn.setqflist(merged, 'r')
-            vim.cmd('copen')
-            vim.cmd('redraw!')
-            vim.api.nvim_echo({{'Results sent to quickfix (deduped rows).', 'Normal'}}, false, {})
-        end
-    else
+    if #output == 0 then
         vim.api.nvim_echo({{' -------> No matching lines found.', 'Normal'}}, false, {})
+        return
+    end
+
+    vim.fn.setqflist({}, 'r', { title = 'Tag Search: ' .. tags, lines = output, efm = '%f:%l:%c:%m' })
+
+    local qf = vim.fn.getqflist()
+    local seen = {}
+    local merged = {}
+    for _, entry in ipairs(qf) do
+        local key = entry.bufnr .. ':' .. entry.lnum
+        if not seen[key] then
+            seen[key] = true
+            table.insert(merged, entry)
+        end
+    end
+
+    if #merged == 1 then
+        vim.fn.setqflist(merged, 'r')
+        vim.cmd('cfirst')
+        vim.cmd('cclose')
+    else
+        vim.fn.setqflist(merged, 'r')
+        vim.cmd('copen')
+        vim.cmd('redraw!')
+        vim.api.nvim_echo({{'Results sent to quickfix (deduped rows).', 'Normal'}}, false, {})
     end
 end
 
