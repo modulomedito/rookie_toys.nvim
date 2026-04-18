@@ -66,6 +66,7 @@ function M.setup()
         rust_analyzer = {},
         lua_ls = {},
         jsonls = {},
+        marksman = {},
         -- Add more servers here
     }
 
@@ -224,7 +225,10 @@ function M.setup()
                 else
                     vim.lsp.buf.format({ async = true })
                 end
-            end, { desc = "Format buffer (conform)", buffer = ev.buf })
+            end, {
+                desc = "Format buffer (conform)",
+                buffer = ev.buf,
+            })
         end,
     })
 
