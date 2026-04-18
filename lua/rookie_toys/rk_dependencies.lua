@@ -13,7 +13,6 @@ function M.setup()
     require("rookie_toys.dependencies.codecompanion").setup()
     require("rookie_toys.dependencies.imselect").setup()
     require("rookie_toys.dependencies.smear-cursor").setup()
-    -- require("rookie_toys.dependencies.tokyonight").setup()
 end
 
 return M

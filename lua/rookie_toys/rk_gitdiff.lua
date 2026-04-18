@@ -77,6 +77,23 @@ function M.jump_to_next_change()
 end
 
 function M.setup()
+    local function setup_diff_highlights()
+        -- 鲜艳的差异背景与前景颜色，提升对比度与辨识度
+        vim.api.nvim_set_hl(0, "DiffAdd", { bg = "#284A36", fg = "#A6E3A1" })
+        vim.api.nvim_set_hl(0, "DiffChange", { bg = "#273A5E", fg = "#89B4FA" })
+        vim.api.nvim_set_hl(0, "DiffDelete", { bg = "#5C2C35", fg = "#F38BA8" })
+        vim.api.nvim_set_hl(0, "DiffText", { bg = "#394b70", fg = "#89DCEB", bold = true })
+    end
+
+    -- 初始化时加载一次
+    setup_diff_highlights()
+
+    -- 确保颜色在切换主题时不会被覆盖
+    vim.api.nvim_create_autocmd("ColorScheme", {
+        pattern = "*",
+        callback = setup_diff_highlights,
+    })
+
     vim.api.nvim_create_user_command(
         "RkGitdiffJumpToNextChange",
         M.jump_to_next_change,
