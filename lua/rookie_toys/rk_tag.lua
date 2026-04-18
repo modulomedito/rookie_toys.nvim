@@ -68,7 +68,7 @@ function M.search_tags()
     local filename = vim.fn.expand('%')
 
     for lnum, line in ipairs(lines) do
-        if line:match("#%w+") then
+        if line:match("^#%w+") then
             local found = true
             for _, tag in ipairs(taglist) do
                 if not string.find(line, "#" .. tag, 1, true) then
@@ -108,7 +108,7 @@ function M.search_global_tags()
     end
     table.sort(taglist)
 
-    local pattern = "#" .. table.concat(taglist, ".*#")
+    local pattern = "^#" .. table.concat(taglist, ".*#")
     vim.api.nvim_echo({{'Searching tags: ' .. pattern, 'Normal'}}, false, {})
 
     local cmd = { "rg", "--vimgrep", "--color=never", pattern }
