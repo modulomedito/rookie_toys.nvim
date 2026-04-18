@@ -1,11 +1,12 @@
 local M = {}
 
---- Jump to first differing column between this window and the other diff window
-function M.jump_to_change()
+--- Jump to the next differing column between this window and the other diff window on the current line
+function M.jump_to_next_change()
     local cur_win = vim.api.nvim_get_current_win()
     local cur_line_content = vim.api.nvim_get_current_line()
     local cur_pos = vim.api.nvim_win_get_cursor(0)
     local cur_row = cur_pos[1]
+    local cur_col = cur_pos[2] + 1
 
     -- find another window that has 'diff' enabled
     local other_buf = -1
@@ -36,39 +37,56 @@ function M.jump_to_change()
     local a = cur_line_content
     local b = other_line_content
     local m = math.min(#a, #b)
+
+    local in_diff = false
+    if cur_col <= m then
+        in_diff = a:sub(cur_col, cur_col) ~= b:sub(cur_col, cur_col)
+    elseif cur_col > m and #a ~= #b then
+        in_diff = true
+    end
+
     local col = -1
 
-    for i = 1, m do
-        if a:sub(i, i) ~= b:sub(i, i) then
-            col = i
-            break
+    for i = cur_col + 1, m do
+        local is_diff = a:sub(i, i) ~= b:sub(i, i)
+        if in_diff then
+            if not is_diff then
+                in_diff = false
+            end
+        else
+            if is_diff then
+                col = i
+                break
+            end
+        end
+    end
+
+    if col == -1 and not in_diff then
+        if #a ~= #b and cur_col <= m then
+            col = m + 1
         end
     end
 
     if col == -1 then
-        if #a ~= #b then
-            col = m + 1
-        else
-            vim.notify("No difference on this line", vim.log.levels.INFO)
-            return
-        end
+        vim.notify("No more differences on this line", vim.log.levels.INFO)
+        return
     end
 
     -- nvim_win_set_cursor uses 0-indexed column, so col - 1
-    vim.api.nvim_win_set_cursor(0, { cur_row, col - 1 })
+    pcall(vim.api.nvim_win_set_cursor, 0, { cur_row, col - 1 })
 end
 
 function M.setup()
     vim.api.nvim_create_user_command(
-        "RkGitdiffJumpToChange",
-        M.jump_to_change,
+        "RkGitdiffJumpToNextChange",
+        M.jump_to_next_change,
         {
-            desc = "Jump to the first differing column in diff windows",
+            desc = "Jump to the next differing column in diff windows",
         }
     )
 
-    vim.keymap.set("n", "<leader>jd", M.jump_to_change, {
-        desc = "Jump to the first differing column in diff windows",
+    vim.keymap.set("n", "<leader>jd", M.jump_to_next_change, {
+        desc = "Jump to the next differing column in diff windows",
     })
 end
 
