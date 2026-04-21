@@ -76,6 +76,7 @@ local function create_ui_buffer()
         vim.api.nvim_buf_set_keymap(state.buf, "n", "r", "<cmd>lua require('rookie_toys.rk_gitlab').refresh()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "/", "<cmd>lua require('rookie_toys.rk_gitlab').search()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "<BS>", "<cmd>lua require('rookie_toys.rk_gitlab').go_back()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "<C-o>", "<cmd>lua require('rookie_toys.rk_gitlab').go_back()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "g?", "<cmd>lua require('rookie_toys.rk_gitlab').toggle_help()<CR>", opts)
     end
 
@@ -172,29 +173,15 @@ render_issues = function(project_id)
 end
 
 render_issue_detail = function(issue_iid)
+    state.current_view = "issue_detail"
     local project_id = state.selected_project
 
-    -- Close floating window before opening details
-    if state.win and vim.api.nvim_win_is_valid(state.win) then
-        vim.api.nvim_win_close(state.win, true)
-        state.win = nil
-    end
-
-    -- Open detail buffer in main window area
-    vim.cmd("enew")
-    local detail_buf = vim.api.nvim_get_current_buf()
-
-    vim.bo[detail_buf].buftype = "nofile"
-    vim.bo[detail_buf].bufhidden = "wipe"
-    vim.bo[detail_buf].swapfile = false
-    vim.bo[detail_buf].filetype = "markdown"
-
-    vim.api.nvim_buf_set_lines(detail_buf, 0, -1, false, { "Loading issue details..." })
+    set_lines({ "Loading issue details..." })
 
     vim.defer_fn(function()
         local issue = make_request(string.format("/projects/%d/issues/%d", project_id, issue_iid))
         if not issue then
-            vim.api.nvim_buf_set_lines(detail_buf, 0, -1, false, { "Failed to load issue." })
+            set_lines({ "Failed to load issue." })
             return
         end
 
@@ -251,9 +238,10 @@ render_issue_detail = function(issue_iid)
             table.insert(lines, "*No comments.*")
         end
 
-        vim.bo[detail_buf].modifiable = true
-        vim.api.nvim_buf_set_lines(detail_buf, 0, -1, false, lines)
-        vim.bo[detail_buf].modifiable = false
+        set_lines(lines)
+        if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+            vim.bo[state.buf].filetype = "markdown"
+        end
     end, 10)
 end
 
@@ -290,6 +278,11 @@ end
 function M.go_back()
     if state.current_view == "help" then
         M.toggle_help()
+    elseif state.current_view == "issue_detail" then
+        if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+            vim.bo[state.buf].filetype = "rk_gitlab"
+        end
+        render_issues(state.selected_project)
     elseif state.current_view == "issues" then
         state.filter_text = ""
         render_projects()
@@ -310,14 +303,14 @@ function M.toggle_help()
         local lines = {
             "=== RkGitlab Keymaps ===",
             "",
-            "  <CR> : Open Project / View Issue Details",
-            "  <BS> : Go back to Project List",
-            "  /    : Search / Filter Issues",
-            "  r    : Refresh current view",
-            "  q    : Close window",
-            "  g?   : Toggle this help menu",
+            "  <CR>      : Open Project / View Issue Details",
+            "  <BS>/<C-o>: Go back",
+            "  /         : Search / Filter Issues",
+            "  r         : Refresh current view",
+            "  q         : Close window",
+            "  g?        : Toggle this help menu",
             "",
-            "Press g? or <BS> to return to the previous view."
+            "Press g?, <BS>, or <C-o> to return to the previous view."
         }
         set_lines(lines)
     end
