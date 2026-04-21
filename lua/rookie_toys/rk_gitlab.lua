@@ -79,7 +79,7 @@ local function create_ui_buffer()
         vim.api.nvim_buf_set_keymap(state.buf, "n", "<CR>", "<cmd>lua require('rookie_toys.rk_gitlab').on_enter()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "r", "<cmd>lua require('rookie_toys.rk_gitlab').refresh()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "/", "<cmd>lua require('rookie_toys.rk_gitlab').search()<CR>", opts)
-        vim.api.nvim_buf_set_keymap(state.buf, "n", "<C-/>", "<cmd>lua require('rookie_toys.rk_gitlab').toggle_quick_filter()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "M", "<cmd>lua require('rookie_toys.rk_gitlab').toggle_quick_filter()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "<BS>", "<cmd>lua require('rookie_toys.rk_gitlab').go_back()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "<C-o>", "<cmd>lua require('rookie_toys.rk_gitlab').go_back()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "<C-i>", "<cmd>lua require('rookie_toys.rk_gitlab').go_forward()<CR>", opts)
@@ -317,7 +317,7 @@ function M.toggle_quick_filter()
     end
 
     local line = vim.api.nvim_get_current_line()
-    local pattern = line:match("%[(.-)%]")
+    local pattern = line:match("%[([^%]]+@[^%]]+)%]")
     if pattern then
         state.quick_filter_pattern = pattern
         state.quick_filter_active = true
@@ -367,7 +367,7 @@ function M.toggle_help()
             "  <BS>/<C-o>: Go back",
             "  <C-i>     : Go forward",
             "  /         : Search / Filter Issues",
-            "  <C-/>     : Toggle quick filter for [state@assignee]",
+            "  M         : Toggle quick filter for [state@assignee]",
             "  r         : Refresh current view",
             "  q         : Close window",
             "  g?        : Toggle this help menu",
