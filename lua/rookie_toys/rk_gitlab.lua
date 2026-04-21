@@ -9,6 +9,7 @@ local state = {
     projects = nil,
     issues = {},
     current_view = "projects",
+    previous_view = nil,
     selected_project = nil,
     filter_text = "",
     buf = nil,
@@ -56,37 +57,46 @@ local function create_ui_buffer()
     if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
         if state.win and vim.api.nvim_win_is_valid(state.win) then
             vim.api.nvim_set_current_win(state.win)
-        else
-            vim.cmd("vsplit")
-            vim.cmd("wincmd L")
-            vim.api.nvim_win_set_buf(0, state.buf)
-            state.win = vim.api.nvim_get_current_win()
+            return
         end
-        return
+    else
+        state.buf = vim.api.nvim_create_buf(false, true)
+
+        -- Buffer options
+        vim.bo[state.buf].buftype = "nofile"
+        vim.bo[state.buf].bufhidden = "hide"
+        vim.bo[state.buf].swapfile = false
+        vim.bo[state.buf].modifiable = false
+        vim.bo[state.buf].filetype = "rk_gitlab"
+
+        -- Keymaps
+        local opts = { noremap = true, silent = true }
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "q", "<cmd>lua require('rookie_toys.rk_gitlab').close()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "<CR>", "<cmd>lua require('rookie_toys.rk_gitlab').on_enter()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "r", "<cmd>lua require('rookie_toys.rk_gitlab').refresh()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "/", "<cmd>lua require('rookie_toys.rk_gitlab').search()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "<BS>", "<cmd>lua require('rookie_toys.rk_gitlab').go_back()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "g?", "<cmd>lua require('rookie_toys.rk_gitlab').toggle_help()<CR>", opts)
     end
 
-    vim.cmd("vsplit")
-    vim.cmd("wincmd L")
-    vim.cmd("vertical resize 40")
+    local width = math.floor(vim.o.columns * 0.8)
+    local height = math.floor(vim.o.lines * 0.8)
+    local col = math.floor((vim.o.columns - width) / 2)
+    local row = math.floor((vim.o.lines - height) / 2)
 
-    state.buf = vim.api.nvim_create_buf(false, true)
-    state.win = vim.api.nvim_get_current_win()
-    vim.api.nvim_win_set_buf(state.win, state.buf)
+    local win_opts = {
+        relative = "editor",
+        width = width,
+        height = height,
+        col = col,
+        row = row,
+        style = "minimal",
+        border = "rounded",
+        title = " GitLab ",
+        title_pos = "center",
+    }
 
-    -- Buffer options
-    vim.bo[state.buf].buftype = "nofile"
-    vim.bo[state.buf].bufhidden = "hide"
-    vim.bo[state.buf].swapfile = false
-    vim.bo[state.buf].modifiable = false
-    vim.bo[state.buf].filetype = "rk_gitlab"
-
-    -- Keymaps
-    local opts = { noremap = true, silent = true }
-    vim.api.nvim_buf_set_keymap(state.buf, "n", "q", "<cmd>lua require('rookie_toys.rk_gitlab').close()<CR>", opts)
-    vim.api.nvim_buf_set_keymap(state.buf, "n", "<CR>", "<cmd>lua require('rookie_toys.rk_gitlab').on_enter()<CR>", opts)
-    vim.api.nvim_buf_set_keymap(state.buf, "n", "r", "<cmd>lua require('rookie_toys.rk_gitlab').refresh()<CR>", opts)
-    vim.api.nvim_buf_set_keymap(state.buf, "n", "/", "<cmd>lua require('rookie_toys.rk_gitlab').search()<CR>", opts)
-    vim.api.nvim_buf_set_keymap(state.buf, "n", "<BS>", "<cmd>lua require('rookie_toys.rk_gitlab').go_back()<CR>", opts)
+    state.win = vim.api.nvim_open_win(state.buf, true, win_opts)
 end
 
 local function set_lines(lines)
@@ -103,8 +113,15 @@ render_projects = function()
 
     vim.defer_fn(function()
         if not state.projects then
-            local data = make_request("/projects?membership=true&simple=true&per_page=100")
+            local data = make_request("/projects?membership=true&simple=true&order_by=updated_at&sort=desc&per_page=100")
             state.projects = data or {}
+
+            -- Ensure the list is sorted by modified date (new at top, old at bottom) locally as fallback
+            table.sort(state.projects, function(a, b)
+                local time_a = a.last_activity_at or a.updated_at or ""
+                local time_b = b.last_activity_at or b.updated_at or ""
+                return time_a > time_b
+            end)
         end
 
         local lines = { "=== GitLab Projects ===", "" }
@@ -157,8 +174,13 @@ end
 render_issue_detail = function(issue_iid)
     local project_id = state.selected_project
 
+    -- Close floating window before opening details
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+        vim.api.nvim_win_close(state.win, true)
+        state.win = nil
+    end
+
     -- Open detail buffer in main window area
-    vim.cmd("wincmd p")
     vim.cmd("enew")
     local detail_buf = vim.api.nvim_get_current_buf()
 
@@ -266,9 +288,38 @@ function M.search()
 end
 
 function M.go_back()
-    if state.current_view == "issues" then
+    if state.current_view == "help" then
+        M.toggle_help()
+    elseif state.current_view == "issues" then
         state.filter_text = ""
         render_projects()
+    end
+end
+
+function M.toggle_help()
+    if state.current_view == "help" then
+        state.current_view = state.previous_view
+        if state.current_view == "projects" then
+            render_projects()
+        elseif state.current_view == "issues" then
+            render_issues(state.selected_project)
+        end
+    else
+        state.previous_view = state.current_view
+        state.current_view = "help"
+        local lines = {
+            "=== RkGitlab Keymaps ===",
+            "",
+            "  <CR> : Open Project / View Issue Details",
+            "  <BS> : Go back to Project List",
+            "  /    : Search / Filter Issues",
+            "  r    : Refresh current view",
+            "  q    : Close window",
+            "  g?   : Toggle this help menu",
+            "",
+            "Press g? or <BS> to return to the previous view."
+        }
+        set_lines(lines)
     end
 end
 
