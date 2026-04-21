@@ -21,17 +21,33 @@ local state = {
 }
 
 -- Make API request using curl
-local function make_request(endpoint)
+local function make_request(endpoint, method, payload)
     if vim.g.gitlab_token == nil or vim.g.gitlab_token == "" then
         vim.notify("[RkGitlab] Token is not set. Please set vim.g.gitlab_token", vim.log.levels.ERROR)
         return nil
     end
 
     local url = vim.g.gitlab_url .. "/api/v4" .. endpoint
-    -- Use vim.fn.system to avoid external dependencies
-    local cmd = string.format('curl -s --header "PRIVATE-TOKEN: %s" "%s"', vim.g.gitlab_token, url)
+    method = method or "GET"
+
+    local cmd = string.format('curl -s -X %s --header "PRIVATE-TOKEN: %s"', method, vim.g.gitlab_token)
+    local tmp_file = nil
+
+    if payload then
+        tmp_file = vim.fn.tempname()
+        local f = io.open(tmp_file, "w")
+        if f then
+            f:write(vim.fn.json_encode(payload))
+            f:close()
+            cmd = cmd .. string.format(' --header "Content-Type: application/json" -d "@%s"', tmp_file)
+        end
+    end
+
+    cmd = cmd .. string.format(' "%s"', url)
 
     local stdout = vim.fn.system(cmd)
+    if tmp_file then os.remove(tmp_file) end
+
     if vim.v.shell_error ~= 0 then
         vim.notify("[RkGitlab] API request failed.", vim.log.levels.ERROR)
         return nil
@@ -39,6 +55,7 @@ local function make_request(endpoint)
 
     local success, data = pcall(vim.fn.json_decode, stdout)
     if not success then
+        if stdout == "" then return true end
         vim.notify("[RkGitlab] Failed to parse API response.", vim.log.levels.ERROR)
         return nil
     end
@@ -398,12 +415,140 @@ function M.on_enter()
     end
 end
 
+function M.close_issue()
+    if state.current_view ~= "issue_detail" or not state.selected_project or not state.selected_issue then
+        vim.notify("[RkGitlab] No issue currently open", vim.log.levels.WARN)
+        return
+    end
+
+    local res = make_request(string.format("/projects/%d/issues/%d", state.selected_project, state.selected_issue), "PUT", { state_event = "close" })
+    if res then
+        vim.notify(string.format("[RkGitlab] Issue #%d closed", state.selected_issue), vim.log.levels.INFO)
+        render_issue_detail(state.selected_issue)
+    end
+end
+
+function M.open_issue()
+    if state.current_view ~= "issue_detail" or not state.selected_project or not state.selected_issue then
+        vim.notify("[RkGitlab] No issue currently open", vim.log.levels.WARN)
+        return
+    end
+
+    local res = make_request(string.format("/projects/%d/issues/%d", state.selected_project, state.selected_issue), "PUT", { state_event = "reopen" })
+    if res then
+        vim.notify(string.format("[RkGitlab] Issue #%d reopened", state.selected_issue), vim.log.levels.INFO)
+        render_issue_detail(state.selected_issue)
+    end
+end
+
+function M.comment_issue()
+    if state.current_view ~= "issue_detail" or not state.selected_project or not state.selected_issue then
+        vim.notify("[RkGitlab] No issue currently open", vim.log.levels.WARN)
+        return
+    end
+
+    local project_id = state.selected_project
+    local issue_iid = state.selected_issue
+
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[buf].buftype = "acwrite"
+    vim.bo[buf].filetype = "markdown"
+    vim.bo[buf].bufhidden = "wipe"
+
+    local tmp_name = string.format("gitlab_comment_%d_%d.md", project_id, issue_iid)
+    pcall(vim.api.nvim_buf_set_name, buf, tmp_name)
+
+    local instructions = {
+        "",
+        "<!-- Please enter your comment above. -->",
+        "<!-- Empty or unchanged comments will be aborted. -->",
+        string.format("<!-- Issue #%d -->", issue_iid)
+    }
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, instructions)
+
+    local width = math.floor(vim.o.columns * 0.6)
+    local height = math.floor(vim.o.lines * 0.6)
+    local col = math.floor((vim.o.columns - width) / 2)
+    local row = math.floor((vim.o.lines - height) / 2)
+
+    local win_opts = {
+        relative = "editor",
+        width = width,
+        height = height,
+        col = col,
+        row = row,
+        style = "minimal",
+        border = "rounded",
+        title = string.format(" Comment on Issue #%d ", issue_iid),
+        title_pos = "center",
+    }
+
+    vim.api.nvim_open_win(buf, true, win_opts)
+    vim.api.nvim_win_set_cursor(0, {1, 0})
+
+    vim.api.nvim_create_autocmd("BufWriteCmd", {
+        buffer = buf,
+        callback = function()
+            local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+            local comment_lines = {}
+            for _, line in ipairs(lines) do
+                if not line:match("^<!%-%-.*%-%->$") then
+                    table.insert(comment_lines, line)
+                end
+            end
+
+            local body = table.concat(comment_lines, "\n")
+            body = body:gsub("^%s+", ""):gsub("%s+$", "")
+
+            if body == "" then
+                vim.notify("[RkGitlab] Empty comment aborted.", vim.log.levels.INFO)
+                vim.bo[buf].modified = false
+                vim.cmd("bdelete")
+                return
+            end
+
+            local res = make_request(string.format("/projects/%d/issues/%d/notes", project_id, issue_iid), "POST", { body = body })
+            if res then
+                vim.notify(string.format("[RkGitlab] Comment added to Issue #%d", issue_iid), vim.log.levels.INFO)
+                vim.bo[buf].modified = false
+                vim.cmd("bdelete")
+
+                if state.current_view == "issue_detail" and state.selected_issue == issue_iid then
+                    render_issue_detail(issue_iid)
+                end
+            else
+                vim.notify("[RkGitlab] Failed to add comment", vim.log.levels.ERROR)
+            end
+        end
+    })
+end
+
 -- Setup function to register the command
 function M.setup()
-    vim.api.nvim_create_user_command("RkGitlabIssue", function()
-        create_ui_buffer()
-        render_projects()
-    end, { desc = "Open GitLab Projects and Issues Browser" })
+    vim.api.nvim_create_user_command("RkGitlabIssue", function(opts)
+        local args = opts.fargs
+        if #args == 0 then
+            create_ui_buffer()
+            render_projects()
+        else
+            local action = args[1]
+            if action == "close" then
+                M.close_issue()
+            elseif action == "open" then
+                M.open_issue()
+            elseif action == "comment" then
+                M.comment_issue()
+            else
+                vim.notify("[RkGitlab] Unknown action: " .. action, vim.log.levels.ERROR)
+            end
+        end
+    end, {
+        nargs = "*",
+        desc = "Open GitLab Projects and Issues Browser or perform actions",
+        complete = function()
+            return { "open", "close", "comment" }
+        end
+    })
 end
 
 return M
