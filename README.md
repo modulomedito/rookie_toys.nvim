@@ -34,6 +34,7 @@ Use lazy.nvim to install this plugin.
     'keaising/im-select.nvim', -- Auto switch input method
     'tpope/vim-surround', -- Edit surrounding characters
     'sphamba/smear-cursor.nvim', -- Cursor trail animation
+    'stevearc/oil.nvim', -- File explorer
   },
 },
 ```
