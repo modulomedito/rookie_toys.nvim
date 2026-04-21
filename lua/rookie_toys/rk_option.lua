@@ -11,8 +11,8 @@ function M.setup()
     vim.opt.colorcolumn = { "81", "101", "121" }
     vim.opt.complete = { ".", "w", "b", "u", "t" }
     vim.opt.completeopt = { "menuone", "noselect", "popup" }
-    -- vim.opt.cursorcolumn = true
-    -- vim.opt.cursorline = true
+    vim.opt.cursorcolumn = true
+    vim.opt.cursorline = true
     vim.opt.expandtab = true
     vim.opt.fileformat = "unix"
     vim.opt.fileencoding = "utf-8"
