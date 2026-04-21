@@ -13,9 +13,9 @@ syntax match RkGitlabIssueId /^#\d\+/
 
 " Matches tags like [opened@张三] and extracts state/assignee for specific coloring
 syntax match RkGitlabTag /\[[^\]]\+@[^\]]\+\]/ contains=RkGitlabStateOpened,RkGitlabStateClosed,RkGitlabStateOther,RkGitlabAssignee,RkGitlabAt
+syntax match RkGitlabStateOther /\[\zs[^@\]]\+\ze@/ contained
 syntax match RkGitlabStateOpened /\[\zsopened\ze@/ contained
 syntax match RkGitlabStateClosed /\[\zsclosed\ze@/ contained
-syntax match RkGitlabStateOther /\[\zs[^@\]]\+\ze@/ contained
 syntax match RkGitlabAssignee /@\zs[^\]]\+\ze\]/ contained
 syntax match RkGitlabAt /@/ contained
 
