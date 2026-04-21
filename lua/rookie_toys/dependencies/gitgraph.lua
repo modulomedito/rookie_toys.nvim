@@ -44,59 +44,100 @@ function M.async_git(args, success_msg)
 end
 
 function M.draw_gitgraph()
+    -- 1. Ensure we are not in NvimTree
+    if vim.bo.filetype == "NvimTree" then
+        vim.cmd("wincmd l") -- Try to move right
+        if vim.bo.filetype == "NvimTree" then
+            -- Still in NvimTree? Try to find any other window
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+                local buf = vim.api.nvim_win_get_buf(win)
+                if vim.bo[buf].filetype ~= "NvimTree" then
+                    vim.api.nvim_set_current_win(win)
+                    break
+                end
+            end
+        end
+    end
+
+    local main_win = vim.api.nvim_get_current_win()
+
+    -- Find existing windows and buffers
     local fugitive_buf = -1
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.bo[buf].filetype == "fugitive" then
-            fugitive_buf = buf
-            break
-        end
-    end
-
-    if fugitive_buf == -1 then
-        local ok, err = pcall(vim.cmd, "G")
-        if not ok then
-            vim.notify("Fugitive failed: " .. tostring(err), vim.log.levels.ERROR)
-            return
-        end
-        vim.schedule(function()
-            M.draw_gitgraph()
-        end)
-        return
-    else
-        -- Focus fugitive window if it exists, otherwise open it
-        local fugitive_win = vim.fn.bufwinid(fugitive_buf)
-        if fugitive_win ~= -1 then
-            vim.api.nvim_set_current_win(fugitive_win)
-        else
-            vim.api.nvim_set_current_buf(fugitive_buf)
-        end
-        -- Refresh fugitive
-        pcall(vim.cmd, "G")
-    end
-
     local gitgraph_buf = -1
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.bo[buf].filetype == "gitgraph" then
+        local ft = vim.bo[buf].filetype
+        if ft == "fugitive" then
+            fugitive_buf = buf
+        elseif ft == "gitgraph" then
             gitgraph_buf = buf
-            break
         end
     end
 
-    if gitgraph_buf ~= -1 then
-        -- Find a window showing this buffer
-        local win = vim.fn.bufwinid(gitgraph_buf)
-        if win ~= -1 then
-            vim.api.nvim_set_current_win(win)
+    local fugitive_win = -1
+    local gitgraph_win = -1
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local buf = vim.api.nvim_win_get_buf(win)
+        local ft = vim.bo[buf].filetype
+        if ft == "fugitive" then
+            fugitive_win = win
+        elseif ft == "gitgraph" then
+            gitgraph_win = win
+        end
+    end
+
+    -- 2. Open/Focus Fugitive
+    if fugitive_win ~= -1 then
+        vim.api.nvim_set_current_win(fugitive_win)
+    else
+        vim.api.nvim_set_current_win(main_win)
+        if fugitive_buf ~= -1 then
+            vim.cmd("rightbelow split")
+            vim.api.nvim_set_current_buf(fugitive_buf)
         else
-            -- If not visible, split right and switch to it
-            vim.cmd("rightbelow vsplit")
+            -- Use rightbelow G to try and force the split location
+            local ok, err = pcall(vim.cmd, "rightbelow G")
+            if not ok then
+                vim.notify(
+                    "Fugitive failed: " .. tostring(err),
+                    vim.log.levels.ERROR
+                )
+                return
+            end
+        end
+
+        -- Re-locate fugitive window
+        for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local buf = vim.api.nvim_win_get_buf(win)
+            if vim.bo[buf].filetype == "fugitive" then
+                fugitive_win = win
+                break
+            end
+        end
+    end
+
+    if fugitive_win == -1 then
+        return
+    end
+
+    -- Refresh fugitive
+    vim.api.nvim_win_call(fugitive_win, function()
+        pcall(vim.cmd, "G")
+    end)
+
+    -- 3. Open/Focus GitGraph
+    if gitgraph_win ~= -1 then
+        vim.api.nvim_set_current_win(gitgraph_win)
+    else
+        vim.api.nvim_set_current_win(fugitive_win)
+        vim.cmd("rightbelow vsplit")
+        gitgraph_win = vim.api.nvim_get_current_win()
+        if gitgraph_buf ~= -1 then
             vim.api.nvim_set_current_buf(gitgraph_buf)
         end
-    else
-        -- If doesn't exist, split right
-        vim.cmd("rightbelow vsplit")
     end
-    -- Run GitGraph command to update/draw
+
+    -- 4. Draw
+    vim.api.nvim_set_current_win(gitgraph_win)
     require("gitgraph").draw({}, { all = true, max_count = 5000 })
 end
 
