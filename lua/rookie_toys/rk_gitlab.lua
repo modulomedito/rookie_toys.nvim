@@ -164,15 +164,15 @@ render_issues = function(project_id)
         local filter = state.filter_text:lower()
         for _, issue in ipairs(issues) do
             local title = issue.title:lower()
-            local author = (issue.author and issue.author.name or ""):lower()
+            local author = (type(issue.author) == "table" and issue.author.name or ""):lower()
             local state_str = (issue.state or ""):lower()
 
             local assignee_names = {}
-            if issue.assignees and #issue.assignees > 0 then
+            if type(issue.assignees) == "table" and #issue.assignees > 0 then
                 for _, a in ipairs(issue.assignees) do
                     table.insert(assignee_names, a.name)
                 end
-            elseif issue.assignee then
+            elseif type(issue.assignee) == "table" then
                 table.insert(assignee_names, issue.assignee.name)
             end
 
@@ -219,7 +219,7 @@ render_issue_detail = function(issue_iid)
         local lines = {}
         table.insert(lines, "# " .. issue.title)
         table.insert(lines, "**ID:** " .. issue.iid)
-        table.insert(lines, "**Author:** " .. (issue.author and issue.author.name or "Unknown"))
+        table.insert(lines, "**Author:** " .. (type(issue.author) == "table" and issue.author.name or "Unknown"))
         table.insert(lines, "**State:** " .. issue.state)
         table.insert(lines, "**Created:** " .. issue.created_at)
 
@@ -232,12 +232,14 @@ render_issue_detail = function(issue_iid)
         table.insert(lines, "**Labels:** " .. labels_str)
 
         local assignee_str = "Unassigned"
-        if issue.assignees and #issue.assignees > 0 then
+        if type(issue.assignees) == "table" and #issue.assignees > 0 then
             local assignees = {}
             for _, a in ipairs(issue.assignees) do
                 table.insert(assignees, a.name)
             end
             assignee_str = table.concat(assignees, ", ")
+        elseif type(issue.assignee) == "table" then
+            assignee_str = issue.assignee.name
         end
         table.insert(lines, "**Assignee:** " .. assignee_str)
         table.insert(lines, "")
