@@ -486,6 +486,8 @@ function M.comment_issue()
     vim.api.nvim_open_win(buf, true, win_opts)
     vim.api.nvim_win_set_cursor(0, {1, 0})
 
+    local submitted_body = nil
+
     vim.api.nvim_create_autocmd("BufWriteCmd", {
         buffer = buf,
         callback = function()
@@ -501,23 +503,34 @@ function M.comment_issue()
             body = body:gsub("^%s+", ""):gsub("%s+$", "")
 
             if body == "" then
-                vim.notify("[RkGitlab] Empty comment aborted.", vim.log.levels.INFO)
-                vim.bo[buf].modified = false
-                vim.cmd("bdelete")
-                return
+                submitted_body = nil
+                vim.notify("[RkGitlab] Comment empty, will abort on exit.", vim.log.levels.WARN)
+            else
+                submitted_body = body
+                vim.notify("[RkGitlab] Comment saved. Exit buffer to submit.", vim.log.levels.INFO)
             end
+            vim.bo[buf].modified = false
+        end
+    })
 
-            local res = make_request(string.format("/projects/%d/issues/%d/notes", project_id, issue_iid), "POST", { body = body })
-            if res then
-                vim.notify(string.format("[RkGitlab] Comment added to Issue #%d", issue_iid), vim.log.levels.INFO)
-                vim.bo[buf].modified = false
-                vim.cmd("bdelete")
-
-                if state.current_view == "issue_detail" and state.selected_issue == issue_iid then
-                    render_issue_detail(issue_iid)
+    vim.api.nvim_create_autocmd("BufDelete", {
+        buffer = buf,
+        callback = function()
+            if submitted_body and submitted_body ~= "" then
+                local res = make_request(string.format("/projects/%d/issues/%d/notes", project_id, issue_iid), "POST", { body = submitted_body })
+                if res then
+                    vim.notify(string.format("[RkGitlab] Comment added to Issue #%d", issue_iid), vim.log.levels.INFO)
+                    if state.current_view == "issue_detail" and state.selected_issue == issue_iid then
+                        -- Use schedule to avoid issues during buffer deletion
+                        vim.schedule(function()
+                            render_issue_detail(issue_iid)
+                        end)
+                    end
+                else
+                    vim.notify("[RkGitlab] Failed to add comment", vim.log.levels.ERROR)
                 end
             else
-                vim.notify("[RkGitlab] Failed to add comment", vim.log.levels.ERROR)
+                vim.notify("[RkGitlab] Comment aborted.", vim.log.levels.INFO)
             end
         end
     })
