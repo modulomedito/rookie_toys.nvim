@@ -57,12 +57,23 @@ function M.zip(...)
         or "/"
     local zip_file = dir .. sep .. name .. ".zip"
 
-    local cmd = string.format('7z a "%s" "%s"', zip_file, path)
-    if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
-        vim.cmd('silent !start cmd /c "' .. cmd .. '"')
-    else
-        vim.cmd("silent !" .. cmd .. " &")
+    if vim.fn.executable("7z") == 0 then
+        vim.api.nvim_err_writeln("7z is not found in PATH")
+        return
     end
+
+    local cmd = { "7z", "a", zip_file, path }
+    vim.fn.jobstart(cmd, {
+        on_exit = function(_, code)
+            vim.schedule(function()
+                if code == 0 then
+                    print(string.format("Successfully zipped to %s", zip_file))
+                else
+                    vim.api.nvim_err_writeln(string.format("Failed to zip %s (exit code: %s)", path, code))
+                end
+            end)
+        end,
+    })
     print(string.format("Zipping %s to %s...", path, zip_file))
 end
 
@@ -81,12 +92,23 @@ function M.unzip(...)
         or "/"
     local out_dir = dir .. sep .. name_no_ext
 
-    local cmd = string.format('7z x "%s" -o"%s"', path, out_dir)
-    if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
-        vim.cmd('silent !start cmd /c "' .. cmd .. '"')
-    else
-        vim.cmd("silent !" .. cmd .. " &")
+    if vim.fn.executable("7z") == 0 then
+        vim.api.nvim_err_writeln("7z is not found in PATH")
+        return
     end
+
+    local cmd = { "7z", "x", path, "-o" .. out_dir }
+    vim.fn.jobstart(cmd, {
+        on_exit = function(_, code)
+            vim.schedule(function()
+                if code == 0 then
+                    print(string.format("Successfully unzipped to %s", out_dir))
+                else
+                    vim.api.nvim_err_writeln(string.format("Failed to unzip %s (exit code: %s)", path, code))
+                end
+            end)
+        end,
+    })
     print(string.format("Unzipping %s to %s...", path, out_dir))
 end
 
