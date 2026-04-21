@@ -148,9 +148,23 @@ render_projects = function()
             end)
         end
 
-        local lines = { "=== GitLab Projects ===", "" }
+        local lines = { "=== GitLab Projects ===" }
+        if state.filter_text ~= "" then
+            table.insert(lines, "Filter: " .. state.filter_text)
+        end
+        table.insert(lines, "")
+
+        local filter = state.filter_text:lower()
         for _, p in ipairs(state.projects) do
-            table.insert(lines, string.format("[%d] %s", p.id, p.name_with_namespace))
+            local match = true
+            if filter ~= "" then
+                local name = p.name_with_namespace:lower()
+                match = name:find(filter, 1, true)
+            end
+
+            if match then
+                table.insert(lines, string.format("[%d] %s", p.id, p.name_with_namespace))
+            end
         end
 
         set_lines(lines)
@@ -311,14 +325,19 @@ function M.refresh()
 end
 
 function M.search()
-    if state.current_view ~= "issues" then
-        vim.notify("[RkGitlab] Filtering is only available in the issues view", vim.log.levels.INFO)
+    if state.current_view ~= "issues" and state.current_view ~= "projects" then
+        vim.notify("[RkGitlab] Filtering is only available in projects or issues view", vim.log.levels.INFO)
         return
     end
-    vim.ui.input({ prompt = "Filter Issues: ", default = state.filter_text }, function(input)
+    local prompt = state.current_view == "projects" and "Filter Projects: " or "Filter Issues: "
+    vim.ui.input({ prompt = prompt, default = state.filter_text }, function(input)
         if input ~= nil then
             state.filter_text = input
-            render_issues(state.selected_project)
+            if state.current_view == "projects" then
+                render_projects()
+            else
+                render_issues(state.selected_project)
+            end
         end
     end)
 end
@@ -403,6 +422,7 @@ function M.on_enter()
         local id_str = line:match("%[(%d+)%]")
         if id_str then
             state.forward_view = nil
+            state.filter_text = "" -- Clear project filter when entering issues
             render_issues(tonumber(id_str))
         end
     elseif state.current_view == "issues" then
