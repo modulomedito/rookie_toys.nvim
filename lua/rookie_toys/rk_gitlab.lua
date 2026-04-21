@@ -444,6 +444,8 @@ function M.close_issue()
     local res = make_request(string.format("/projects/%d/issues/%d", state.selected_project, state.selected_issue), "PUT", { state_event = "close" })
     if res then
         vim.notify(string.format("[RkGitlab] Issue #%d closed", state.selected_issue), vim.log.levels.INFO)
+        -- Invalidate issues cache for this project so it refreshes when we go back
+        state.issues[state.selected_project] = nil
         render_issue_detail(state.selected_issue)
     end
 end
@@ -457,6 +459,8 @@ function M.open_issue()
     local res = make_request(string.format("/projects/%d/issues/%d", state.selected_project, state.selected_issue), "PUT", { state_event = "reopen" })
     if res then
         vim.notify(string.format("[RkGitlab] Issue #%d reopened", state.selected_issue), vim.log.levels.INFO)
+        -- Invalidate issues cache for this project so it refreshes when we go back
+        state.issues[state.selected_project] = nil
         render_issue_detail(state.selected_issue)
     end
 end
