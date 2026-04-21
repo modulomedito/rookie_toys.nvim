@@ -36,5 +36,9 @@ Use lazy.nvim to install this plugin.
     'sphamba/smear-cursor.nvim', -- Cursor trail animation
     'stevearc/oil.nvim', -- File explorer
   },
+  config = function()
+    require("rookie_toys").setup()
+    -- Other configs
+  end,
 },
 ```
