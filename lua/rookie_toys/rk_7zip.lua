@@ -14,11 +14,25 @@ local function get_path(args)
 
     -- Support nvim-tree as well since it's common in modern setups
     if vim.bo.filetype == "NvimTree" then
-        local lib = pcall(require, "nvim-tree.lib")
-        if lib then
-            local node = require("nvim-tree.lib").get_node_at_cursor()
+        local status_ok, api = pcall(require, "nvim-tree.api")
+        if status_ok then
+            local node = api.tree.get_node_under_cursor()
             if node and node.absolute_path then
                 return node.absolute_path
+            end
+        end
+    end
+
+    -- Support oil.nvim (since it's the default file browser)
+    if vim.bo.filetype == "oil" then
+        local status_ok, oil = pcall(require, "oil")
+        if status_ok then
+            local dir = oil.get_current_dir()
+            local entry = oil.get_cursor_entry()
+            if dir and entry then
+                return dir .. entry.name
+            elseif dir then
+                return dir
             end
         end
     end
