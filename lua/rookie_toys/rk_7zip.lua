@@ -96,13 +96,13 @@ function M.setup()
     -- Keymaps
     vim.keymap.set(
         "n",
-        "<leader>za",
+        "<leader>mZ",
         "<cmd>RkZip<CR>",
         { desc = "7z: Zip current file/dir" }
     )
     vim.keymap.set(
         "n",
-        "<leader>zx",
+        "<leader>mz",
         "<cmd>RkUnzip<CR>",
         { desc = "7z: Unzip current file" }
     )
