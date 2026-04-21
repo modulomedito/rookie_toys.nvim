@@ -97,6 +97,20 @@ function M.setup()
             vim.opt_local.textwidth = 80
         end,
     })
+
+    local group_help =
+        vim.api.nvim_create_augroup("RkHelp", { clear = true })
+    vim.api.nvim_create_autocmd("FileType", {
+        group = group_help,
+        pattern = "help",
+        callback = function(args)
+            vim.keymap.set("n", "gd", "<C-]>", {
+                silent = true,
+                buffer = args.buf,
+                desc = "Help: Jump to tag",
+            })
+        end,
+    })
 end
 
 return M
