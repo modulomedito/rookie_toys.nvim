@@ -10,8 +10,12 @@ local state = {
     issues = {},
     current_view = "projects",
     previous_view = nil,
+    forward_view = nil,
     selected_project = nil,
+    selected_issue = nil,
     filter_text = "",
+    quick_filter_active = false,
+    quick_filter_pattern = "",
     buf = nil,
     win = nil,
 }
@@ -75,8 +79,10 @@ local function create_ui_buffer()
         vim.api.nvim_buf_set_keymap(state.buf, "n", "<CR>", "<cmd>lua require('rookie_toys.rk_gitlab').on_enter()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "r", "<cmd>lua require('rookie_toys.rk_gitlab').refresh()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "/", "<cmd>lua require('rookie_toys.rk_gitlab').search()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "<C-/>", "<cmd>lua require('rookie_toys.rk_gitlab').toggle_quick_filter()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "<BS>", "<cmd>lua require('rookie_toys.rk_gitlab').go_back()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "<C-o>", "<cmd>lua require('rookie_toys.rk_gitlab').go_back()<CR>", opts)
+        vim.api.nvim_buf_set_keymap(state.buf, "n", "<C-i>", "<cmd>lua require('rookie_toys.rk_gitlab').go_forward()<CR>", opts)
         vim.api.nvim_buf_set_keymap(state.buf, "n", "g?", "<cmd>lua require('rookie_toys.rk_gitlab').toggle_help()<CR>", opts)
     end
 
@@ -150,6 +156,9 @@ render_issues = function(project_id)
         if state.filter_text ~= "" then
             table.insert(lines, "Filter: " .. state.filter_text)
         end
+        if state.quick_filter_active then
+            table.insert(lines, "Quick Filter: [" .. state.quick_filter_pattern .. "]")
+        end
         table.insert(lines, "")
 
         local filter = state.filter_text:lower()
@@ -158,13 +167,33 @@ render_issues = function(project_id)
             local author = (issue.author and issue.author.name or ""):lower()
             local state_str = (issue.state or ""):lower()
 
+            local assignee_names = {}
+            if issue.assignees and #issue.assignees > 0 then
+                for _, a in ipairs(issue.assignees) do
+                    table.insert(assignee_names, a.name)
+                end
+            elseif issue.assignee then
+                table.insert(assignee_names, issue.assignee.name)
+            end
+
+            local assignee_str = #assignee_names > 0 and table.concat(assignee_names, ", ") or "Unassigned"
+            local assignee_lower = assignee_str:lower()
+
+            local quick_match_str = string.format("%s@%s", issue.state, assignee_str)
+
             local match = true
             if filter ~= "" then
-                match = title:find(filter, 1, true) or author:find(filter, 1, true) or state_str:find(filter, 1, true)
+                match = title:find(filter, 1, true) or author:find(filter, 1, true) or state_str:find(filter, 1, true) or assignee_lower:find(filter, 1, true)
+            end
+
+            if state.quick_filter_active and state.quick_filter_pattern ~= "" then
+                if quick_match_str ~= state.quick_filter_pattern then
+                    match = false
+                end
             end
 
             if match then
-                table.insert(lines, string.format("#%d [%s] %s", issue.iid, issue.state, issue.title))
+                table.insert(lines, string.format("#%d [%s@%s] %s", issue.iid, issue.state, assignee_str, issue.title))
             end
         end
 
@@ -275,6 +304,27 @@ function M.search()
     end)
 end
 
+function M.toggle_quick_filter()
+    if state.current_view ~= "issues" then
+        return
+    end
+
+    if state.quick_filter_active then
+        state.quick_filter_active = false
+        state.quick_filter_pattern = ""
+        render_issues(state.selected_project)
+        return
+    end
+
+    local line = vim.api.nvim_get_current_line()
+    local pattern = line:match("%[(.-)%]")
+    if pattern then
+        state.quick_filter_pattern = pattern
+        state.quick_filter_active = true
+        render_issues(state.selected_project)
+    end
+end
+
 function M.go_back()
     if state.current_view == "help" then
         M.toggle_help()
@@ -282,10 +332,20 @@ function M.go_back()
         if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
             vim.bo[state.buf].filetype = "rk_gitlab"
         end
+        state.forward_view = "issue_detail"
         render_issues(state.selected_project)
     elseif state.current_view == "issues" then
+        state.forward_view = "issues"
         state.filter_text = ""
         render_projects()
+    end
+end
+
+function M.go_forward()
+    if state.current_view == "projects" and state.forward_view == "issues" and state.selected_project then
+        render_issues(state.selected_project)
+    elseif state.current_view == "issues" and state.forward_view == "issue_detail" and state.selected_issue then
+        render_issue_detail(state.selected_issue)
     end
 end
 
@@ -305,7 +365,9 @@ function M.toggle_help()
             "",
             "  <CR>      : Open Project / View Issue Details",
             "  <BS>/<C-o>: Go back",
+            "  <C-i>     : Go forward",
             "  /         : Search / Filter Issues",
+            "  <C-/>     : Toggle quick filter for [state@assignee]",
             "  r         : Refresh current view",
             "  q         : Close window",
             "  g?        : Toggle this help menu",
@@ -321,11 +383,14 @@ function M.on_enter()
     if state.current_view == "projects" then
         local id_str = line:match("%[(%d+)%]")
         if id_str then
+            state.forward_view = nil
             render_issues(tonumber(id_str))
         end
     elseif state.current_view == "issues" then
         local iid_str = line:match("^#(%d+)")
         if iid_str then
+            state.forward_view = nil
+            state.selected_issue = tonumber(iid_str)
             render_issue_detail(tonumber(iid_str))
         end
     end
