@@ -311,6 +311,20 @@ end
 function M.close()
     if state.win and vim.api.nvim_win_is_valid(state.win) then
         vim.api.nvim_win_close(state.win, true)
+        state.win = nil
+    end
+end
+
+function M.toggle()
+    if state.win and vim.api.nvim_win_is_valid(state.win) then
+        vim.api.nvim_win_close(state.win, true)
+        state.win = nil
+    else
+        local is_new = not (state.buf and vim.api.nvim_buf_is_valid(state.buf))
+        create_ui_buffer()
+        if is_new then
+            render_projects()
+        end
     end
 end
 
@@ -560,6 +574,139 @@ function M.comment_issue()
     })
 end
 
+function M.add_issue()
+    if not state.selected_project then
+        vim.notify("[RkGitlab] Please select a project first to create an issue", vim.log.levels.WARN)
+        return
+    end
+
+    local project_id = state.selected_project
+
+    local buf_title = vim.api.nvim_create_buf(false, true)
+    local buf_desc = vim.api.nvim_create_buf(false, true)
+    local buf_flags = vim.api.nvim_create_buf(false, true)
+
+    for _, b in ipairs({buf_title, buf_desc, buf_flags}) do
+        vim.bo[b].buftype = "acwrite"
+        vim.bo[b].filetype = "markdown"
+        vim.bo[b].bufhidden = "wipe"
+    end
+
+    pcall(vim.api.nvim_buf_set_name, buf_title, string.format("gitlab_issue_title_%d.md", project_id))
+    pcall(vim.api.nvim_buf_set_name, buf_desc, string.format("gitlab_issue_desc_%d.md", project_id))
+    pcall(vim.api.nvim_buf_set_name, buf_flags, string.format("gitlab_issue_flags_%d.md", project_id))
+
+    vim.api.nvim_buf_set_lines(buf_title, 0, -1, false, {""})
+    vim.api.nvim_buf_set_lines(buf_desc, 0, -1, false, {"", "<!-- Issue Description -->"})
+    vim.api.nvim_buf_set_lines(buf_flags, 0, -1, false, {"", "<!-- /assignee @user, /label ~bug -->"})
+
+    local total_width = math.floor(vim.o.columns * 0.6)
+    local total_height = math.floor(vim.o.lines * 0.8)
+    local base_col = math.floor((vim.o.columns - total_width) / 2)
+    local base_row = math.floor((vim.o.lines - total_height) / 2)
+
+    local title_h = 1
+    local flags_h = 3
+    local desc_h = total_height - title_h - flags_h - 4
+
+    local win_title = vim.api.nvim_open_win(buf_title, true, {
+        relative = "editor", width = total_width, height = title_h, col = base_col, row = base_row,
+        style = "minimal", border = "rounded", title = " Title ", title_pos = "center",
+    })
+
+    local win_desc = vim.api.nvim_open_win(buf_desc, true, {
+        relative = "editor", width = total_width, height = desc_h, col = base_col, row = base_row + title_h + 2,
+        style = "minimal", border = "rounded", title = " Description ", title_pos = "center",
+    })
+
+    local win_flags = vim.api.nvim_open_win(buf_flags, true, {
+        relative = "editor", width = total_width, height = flags_h, col = base_col, row = base_row + title_h + 2 + desc_h + 2,
+        style = "minimal", border = "rounded", title = " Flags ", title_pos = "center",
+    })
+
+    vim.api.nvim_set_current_win(win_title)
+
+    local submitted_data = nil
+
+    local function save_action()
+        local title_lines = vim.api.nvim_buf_get_lines(buf_title, 0, -1, false)
+        local desc_lines = vim.api.nvim_buf_get_lines(buf_desc, 0, -1, false)
+        local flags_lines = vim.api.nvim_buf_get_lines(buf_flags, 0, -1, false)
+
+        local title = table.concat(title_lines, ""):gsub("^%s+", ""):gsub("%s+$", "")
+
+        local clean_desc = {}
+        for _, line in ipairs(desc_lines) do
+            if not line:match("^<!%-%-.*%-%->$") then table.insert(clean_desc, line) end
+        end
+        local desc = table.concat(clean_desc, "\n"):gsub("^%s+", ""):gsub("%s+$", "")
+
+        local clean_flags = {}
+        for _, line in ipairs(flags_lines) do
+            if not line:match("^<!%-%-.*%-%->$") then table.insert(clean_flags, line) end
+        end
+        local flags = table.concat(clean_flags, "\n"):gsub("^%s+", ""):gsub("%s+$", "")
+
+        if title == "" then
+            submitted_data = nil
+            vim.notify("[RkGitlab] Title empty, will abort on exit.", vim.log.levels.WARN)
+        else
+            local full_desc = desc
+            if flags ~= "" then
+                full_desc = full_desc .. "\n\n" .. flags
+            end
+            submitted_data = { title = title, description = full_desc }
+            vim.notify("[RkGitlab] Issue saved. Exit any buffer to submit.", vim.log.levels.INFO)
+        end
+
+        pcall(function() vim.bo[buf_title].modified = false end)
+        pcall(function() vim.bo[buf_desc].modified = false end)
+        pcall(function() vim.bo[buf_flags].modified = false end)
+    end
+
+    local is_submitting = false
+    local function close_action()
+        if is_submitting then return end
+        is_submitting = true
+
+        for _, w in ipairs({win_title, win_desc, win_flags}) do
+            if vim.api.nvim_win_is_valid(w) then
+                pcall(vim.api.nvim_win_close, w, true)
+            end
+        end
+
+        if submitted_data and submitted_data.title ~= "" then
+            local res = make_request(string.format("/projects/%d/issues", project_id), "POST", submitted_data)
+            if res then
+                vim.notify(string.format("[RkGitlab] Issue '%s' created", submitted_data.title), vim.log.levels.INFO)
+                state.issues[project_id] = nil
+                if state.current_view == "issues" or state.current_view == "projects" then
+                    vim.schedule(function()
+                        render_issues(project_id)
+                    end)
+                end
+            else
+                vim.notify("[RkGitlab] Failed to create issue", vim.log.levels.ERROR)
+            end
+        else
+            vim.notify("[RkGitlab] Issue creation aborted.", vim.log.levels.INFO)
+        end
+    end
+
+    for _, b in ipairs({buf_title, buf_desc, buf_flags}) do
+        vim.api.nvim_create_autocmd("BufWriteCmd", {
+            buffer = b,
+            callback = save_action
+        })
+        vim.api.nvim_create_autocmd("BufDelete", {
+            buffer = b,
+            callback = function()
+                vim.schedule(close_action)
+            end
+        })
+    end
+end
+
 -- Setup function to register the command
 function M.setup()
     vim.api.nvim_create_user_command("RkGitlabIssue", function(opts)
@@ -575,6 +722,10 @@ function M.setup()
                 M.open_issue()
             elseif action == "comment" then
                 M.comment_issue()
+            elseif action == "add" then
+                M.add_issue()
+            elseif action == "toggle" then
+                M.toggle()
             else
                 vim.notify("[RkGitlab] Unknown action: " .. action, vim.log.levels.ERROR)
             end
@@ -583,7 +734,7 @@ function M.setup()
         nargs = "*",
         desc = "Open GitLab Projects and Issues Browser or perform actions",
         complete = function()
-            return { "open", "close", "comment" }
+            return { "open", "close", "comment", "add", "toggle" }
         end
     })
 end
