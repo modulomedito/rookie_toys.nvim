@@ -38,6 +38,8 @@ Use lazy.nvim to install this plugin.
   },
   config = function()
     vim.g.rookie_toys_ai_model = "gemma2:9b"
+    vim.g.gitlab_url = 'https:///gitlab.com'
+    vim.g.gitlab_token = 'glpat-11111111111111111111'
     require("rookie_toys").setup()
     -- Other configs
   end,
