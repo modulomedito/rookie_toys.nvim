@@ -33,6 +33,8 @@ function M.setup()
         cabbrev Gstashpo silent G stash pop\|RkGitGraph
         cabbrev Gstashpu silent G stash push --include-untracked\|RkGitGraph
         cabbrev Gtag silent G tag\|RkGitGraph<Left><Left><Left><Left><Left><Left><Left><Left><Left><Left><Left>
+
+        cabbrev Gl RkGitlabIssue
     ]])
 end
 
