@@ -598,7 +598,7 @@ function M.add_issue()
 
     vim.api.nvim_buf_set_lines(buf_title, 0, -1, false, {""})
     vim.api.nvim_buf_set_lines(buf_desc, 0, -1, false, {"", "<!-- Issue Description -->"})
-    vim.api.nvim_buf_set_lines(buf_flags, 0, -1, false, {"", "<!-- /assignee @user, /label ~bug -->"})
+    vim.api.nvim_buf_set_lines(buf_flags, 0, -1, false, {"", "<!-- /assign @user, /reassign, /label bug, see https://docs.gitlab.com/user/project/quick_actions/ -->"})
 
     local total_width = math.floor(vim.o.columns * 0.6)
     local total_height = math.floor(vim.o.lines * 0.8)
@@ -623,6 +623,78 @@ function M.add_issue()
         relative = "editor", width = total_width, height = flags_h, col = base_col, row = base_row + title_h + 2 + desc_h + 2,
         style = "minimal", border = "rounded", title = " Flags ", title_pos = "center",
     })
+
+    local confirm_w = math.floor((total_width - 2) / 2)
+    local cancel_w = total_width - 2 - confirm_w
+
+    local buf_confirm = vim.api.nvim_create_buf(false, true)
+    local buf_cancel = vim.api.nvim_create_buf(false, true)
+
+    vim.bo[buf_confirm].buftype = "nofile"
+    vim.bo[buf_confirm].filetype = "markdown"
+    vim.bo[buf_confirm].bufhidden = "wipe"
+
+    vim.bo[buf_cancel].buftype = "nofile"
+    vim.bo[buf_cancel].filetype = "markdown"
+    vim.bo[buf_cancel].bufhidden = "wipe"
+
+    local function center_text(text, width)
+        local padding = width - #text
+        if padding <= 0 then return text end
+        local left = math.floor(padding / 2)
+        local right = padding - left
+        return string.rep(" ", left) .. text .. string.rep(" ", right)
+    end
+
+    vim.api.nvim_buf_set_lines(buf_confirm, 0, -1, false, {center_text("Confirm", confirm_w)})
+    vim.api.nvim_buf_set_lines(buf_cancel, 0, -1, false, {center_text("Cancel", cancel_w)})
+
+    local win_confirm = vim.api.nvim_open_win(buf_confirm, true, {
+        relative = "editor", width = confirm_w, height = 1, col = base_col, row = base_row + title_h + 2 + desc_h + 2 + flags_h + 2,
+        style = "minimal", border = "rounded"
+    })
+
+    local win_cancel = vim.api.nvim_open_win(buf_cancel, true, {
+        relative = "editor", width = cancel_w, height = 1, col = base_col + confirm_w + 2, row = base_row + title_h + 2 + desc_h + 2 + flags_h + 2,
+        style = "minimal", border = "rounded"
+    })
+
+    -- Add keymaps for window navigation
+    local opts = { noremap = true, silent = true }
+
+    -- title buffer
+    vim.api.nvim_buf_set_keymap(buf_title, "n", "<C-w>j", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_desc), opts)
+    vim.api.nvim_buf_set_keymap(buf_title, "n", "<C-w>k", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_flags), opts)
+    vim.api.nvim_buf_set_keymap(buf_title, "n", "<C-j>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_desc), opts)
+    vim.api.nvim_buf_set_keymap(buf_title, "n", "<C-k>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_flags), opts)
+
+    -- desc buffer
+    vim.api.nvim_buf_set_keymap(buf_desc, "n", "<C-w>j", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_flags), opts)
+    vim.api.nvim_buf_set_keymap(buf_desc, "n", "<C-w>k", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_title), opts)
+    vim.api.nvim_buf_set_keymap(buf_desc, "n", "<C-j>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_flags), opts)
+    vim.api.nvim_buf_set_keymap(buf_desc, "n", "<C-k>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_title), opts)
+
+    -- flags buffer
+    vim.api.nvim_buf_set_keymap(buf_flags, "n", "<C-w>j", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_confirm), opts)
+    vim.api.nvim_buf_set_keymap(buf_flags, "n", "<C-w>k", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_desc), opts)
+    vim.api.nvim_buf_set_keymap(buf_flags, "n", "<C-j>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_confirm), opts)
+    vim.api.nvim_buf_set_keymap(buf_flags, "n", "<C-k>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_desc), opts)
+
+    -- confirm buffer
+    vim.api.nvim_buf_set_keymap(buf_confirm, "n", "<C-w>k", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_flags), opts)
+    vim.api.nvim_buf_set_keymap(buf_confirm, "n", "<C-k>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_flags), opts)
+    vim.api.nvim_buf_set_keymap(buf_confirm, "n", "<C-w>j", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_title), opts)
+    vim.api.nvim_buf_set_keymap(buf_confirm, "n", "<C-j>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_title), opts)
+    vim.api.nvim_buf_set_keymap(buf_confirm, "n", "<C-w>l", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_cancel), opts)
+    vim.api.nvim_buf_set_keymap(buf_confirm, "n", "<C-l>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_cancel), opts)
+
+    -- cancel buffer
+    vim.api.nvim_buf_set_keymap(buf_cancel, "n", "<C-w>k", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_flags), opts)
+    vim.api.nvim_buf_set_keymap(buf_cancel, "n", "<C-k>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_flags), opts)
+    vim.api.nvim_buf_set_keymap(buf_cancel, "n", "<C-w>j", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_title), opts)
+    vim.api.nvim_buf_set_keymap(buf_cancel, "n", "<C-j>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_title), opts)
+    vim.api.nvim_buf_set_keymap(buf_cancel, "n", "<C-w>h", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_confirm), opts)
+    vim.api.nvim_buf_set_keymap(buf_cancel, "n", "<C-h>", string.format("<cmd>lua vim.api.nvim_set_current_win(%d)<CR>", win_confirm), opts)
 
     vim.api.nvim_set_current_win(win_title)
 
@@ -669,7 +741,7 @@ function M.add_issue()
         if is_submitting then return end
         is_submitting = true
 
-        for _, w in ipairs({win_title, win_desc, win_flags}) do
+        for _, w in ipairs({win_title, win_desc, win_flags, win_confirm, win_cancel}) do
             if vim.api.nvim_win_is_valid(w) then
                 pcall(vim.api.nvim_win_close, w, true)
             end
@@ -691,7 +763,28 @@ function M.add_issue()
         else
             vim.notify("[RkGitlab] Issue creation aborted.", vim.log.levels.INFO)
         end
+
+        if state.win and vim.api.nvim_win_is_valid(state.win) then
+            pcall(vim.api.nvim_set_current_win, state.win)
+        end
     end
+
+    -- Add Enter keymap to Confirm and Cancel
+    vim.api.nvim_buf_set_keymap(buf_confirm, "n", "<CR>", "", {
+        noremap = true, silent = true,
+        callback = function()
+            save_action()
+            vim.schedule(close_action)
+        end
+    })
+
+    vim.api.nvim_buf_set_keymap(buf_cancel, "n", "<CR>", "", {
+        noremap = true, silent = true,
+        callback = function()
+            submitted_data = nil
+            vim.schedule(close_action)
+        end
+    })
 
     for _, b in ipairs({buf_title, buf_desc, buf_flags}) do
         vim.api.nvim_create_autocmd("BufWriteCmd", {
