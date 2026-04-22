@@ -1,319 +1,190 @@
--- Pure Lua (LuaJIT) AES-128 and AES-256 Implementation (ECB mode)
--- Designed for Neovim plugin `rookie_toys.nvim`
-
-local bit = require("bit")
-local bxor = bit.bxor
-local bor = bit.bor
-local band = bit.band
-local blshift = bit.lshift
-local brshift = bit.rshift
-
 local M = {}
 
--- AES S-Box
-local SBOX = {
-    0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
-    0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
-    0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
-    0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75,
-    0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84,
-    0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf,
-    0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8,
-    0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2,
-    0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73,
-    0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb,
-    0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79,
-    0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08,
-    0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a,
-    0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e,
-    0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
-    0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
-}
+-- Store the AES key
+local aes_key = nil
 
--- Inverse S-Box
-local INV_SBOX = {
-    0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
-    0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,
-    0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,
-    0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2, 0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25,
-    0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92,
-    0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda, 0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84,
-    0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a, 0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06,
-    0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02, 0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b,
-    0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea, 0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73,
-    0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85, 0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e,
-    0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89, 0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b,
-    0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20, 0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4,
-    0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31, 0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f,
-    0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d, 0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef,
-    0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,
-    0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
-}
+local function get_visual_selection()
+    local pos_start = vim.fn.getpos("'<")
+    local line_start, column_start = pos_start[2], pos_start[3]
+    local pos_end = vim.fn.getpos("'>")
+    local line_end, column_end = pos_end[2], pos_end[3]
 
-local RCON = {
-    0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
-}
-
-local function mul2(a) return bxor(band(blshift(a, 1), 0xFF), band(brshift(a, 7), 1) * 0x1b) end
-local function mul3(a) return bxor(mul2(a), a) end
-local function mul9(a) return bxor(a, mul2(mul2(mul2(a)))) end
-local function mul11(a) return bxor(bxor(a, mul2(a)), mul2(mul2(mul2(a)))) end
-local function mul13(a) return bxor(bxor(a, mul2(mul2(a))), mul2(mul2(mul2(a)))) end
-local function mul14(a) return bxor(bxor(mul2(a), mul2(mul2(a))), mul2(mul2(mul2(a)))) end
-
--- AddRoundKey
-local function add_round_key(state, w, round)
-    for c = 0, 3 do
-        local r0 = band(brshift(w[round * 4 + c + 1], 24), 0xFF)
-        local r1 = band(brshift(w[round * 4 + c + 1], 16), 0xFF)
-        local r2 = band(brshift(w[round * 4 + c + 1], 8), 0xFF)
-        local r3 = band(w[round * 4 + c + 1], 0xFF)
-        state[0][c] = bxor(state[0][c], r0)
-        state[1][c] = bxor(state[1][c], r1)
-        state[2][c] = bxor(state[2][c], r2)
-        state[3][c] = bxor(state[3][c], r3)
+    local lines = vim.fn.getline(line_start, line_end)
+    if type(lines) == "string" then
+        lines = { lines }
     end
-end
-
--- SubBytes
-local function sub_bytes(state)
-    for r = 0, 3 do
-        for c = 0, 3 do
-            state[r][c] = SBOX[state[r][c] + 1]
-        end
-    end
-end
-
-local function inv_sub_bytes(state)
-    for r = 0, 3 do
-        for c = 0, 3 do
-            state[r][c] = INV_SBOX[state[r][c] + 1]
-        end
-    end
-end
-
--- ShiftRows
-local function shift_rows(state)
-    local tmp
-    tmp = state[1][0]; state[1][0] = state[1][1]; state[1][1] = state[1][2]; state[1][2] = state[1][3]; state[1][3] = tmp
-    tmp = state[2][0]; state[2][0] = state[2][2]; state[2][2] = tmp
-    tmp = state[2][1]; state[2][1] = state[2][3]; state[2][3] = tmp
-    tmp = state[3][3]; state[3][3] = state[3][2]; state[3][2] = state[3][1]; state[3][1] = state[3][0]; state[3][0] = tmp
-end
-
-local function inv_shift_rows(state)
-    local tmp
-    tmp = state[1][3]; state[1][3] = state[1][2]; state[1][2] = state[1][1]; state[1][1] = state[1][0]; state[1][0] = tmp
-    tmp = state[2][0]; state[2][0] = state[2][2]; state[2][2] = tmp
-    tmp = state[2][1]; state[2][1] = state[2][3]; state[2][3] = tmp
-    tmp = state[3][0]; state[3][0] = state[3][1]; state[3][1] = state[3][2]; state[3][2] = state[3][3]; state[3][3] = tmp
-end
-
--- MixColumns
-local function mix_columns(state)
-    for c = 0, 3 do
-        local s0, s1, s2, s3 = state[0][c], state[1][c], state[2][c], state[3][c]
-        state[0][c] = bxor(bxor(bxor(mul2(s0), mul3(s1)), s2), s3)
-        state[1][c] = bxor(bxor(bxor(s0, mul2(s1)), mul3(s2)), s3)
-        state[2][c] = bxor(bxor(bxor(s0, s1), mul2(s2)), mul3(s3))
-        state[3][c] = bxor(bxor(bxor(mul3(s0), s1), s2), mul2(s3))
-    end
-end
-
-local function inv_mix_columns(state)
-    for c = 0, 3 do
-        local s0, s1, s2, s3 = state[0][c], state[1][c], state[2][c], state[3][c]
-        state[0][c] = bxor(bxor(bxor(mul14(s0), mul11(s1)), mul13(s2)), mul9(s3))
-        state[1][c] = bxor(bxor(bxor(mul9(s0), mul14(s1)), mul11(s2)), mul13(s3))
-        state[2][c] = bxor(bxor(bxor(mul13(s0), mul9(s1)), mul14(s2)), mul11(s3))
-        state[3][c] = bxor(bxor(bxor(mul11(s0), mul13(s1)), mul9(s2)), mul14(s3))
-    end
-end
-
--- KeyExpansion
-local function sub_word(w)
-    return bor(blshift(SBOX[band(brshift(w, 24), 0xFF) + 1], 24),
-               blshift(SBOX[band(brshift(w, 16), 0xFF) + 1], 16),
-               blshift(SBOX[band(brshift(w, 8), 0xFF) + 1], 8),
-               SBOX[band(w, 0xFF) + 1])
-end
-
-local function rot_word(w)
-    return bor(blshift(band(w, 0x00FFFFFF), 8), band(brshift(w, 24), 0xFF))
-end
-
-local function expand_key(key_bytes, nk, nr)
-    local w = {}
-    for i = 1, nk do
-        w[i] = bor(blshift(key_bytes[(i-1)*4 + 1], 24),
-                   blshift(key_bytes[(i-1)*4 + 2], 16),
-                   blshift(key_bytes[(i-1)*4 + 3], 8),
-                   key_bytes[(i-1)*4 + 4])
+    if #lines == 0 then
+        return ""
     end
 
-    for i = nk + 1, 4 * (nr + 1) do
-        local temp = w[i - 1]
-        if (i - 1) % nk == 0 then
-            temp = bxor(sub_word(rot_word(temp)), blshift(RCON[(i - 1) / nk], 24))
-        elseif nk > 6 and (i - 1) % nk == 4 then
-            temp = sub_word(temp)
-        end
-        w[i] = bxor(w[i - nk], temp)
-    end
-    return w
-end
+    local selection_mode = vim.fn.visualmode()
+    local is_inclusive = vim.o.selection == "inclusive"
 
--- AES Core
-local function cipher(block_bytes, w, nr)
-    local state = {[0]={}, [1]={}, [2]={}, [3]={}}
-    for r = 0, 3 do
-        for c = 0, 3 do
-            state[r][c] = block_bytes[c * 4 + r + 1]
+    if selection_mode == "v" then
+        -- Character-wise
+        local end_offset = is_inclusive and 0 or 1
+        lines[#lines] = string.sub(lines[#lines], 1, column_end - end_offset)
+        lines[1] = string.sub(lines[1], column_start)
+    elseif selection_mode == "V" then
+        -- Line-wise: lines are already correct
+    elseif selection_mode == "\22" then
+        -- Block-wise (<C-V>)
+        local end_offset = is_inclusive and 0 or 1
+        for i = 1, #lines do
+            lines[i] = string.sub(lines[i], column_start, column_end - end_offset)
         end
     end
 
-    add_round_key(state, w, 0)
-    for round = 1, nr - 1 do
-        sub_bytes(state)
-        shift_rows(state)
-        mix_columns(state)
-        add_round_key(state, w, round)
-    end
-    sub_bytes(state)
-    shift_rows(state)
-    add_round_key(state, w, nr)
-
-    local out = {}
-    for c = 0, 3 do
-        for r = 0, 3 do
-            out[c * 4 + r + 1] = state[r][c]
-        end
-    end
-    return out
+    return table.concat(lines, "\n")
 end
 
-local function inv_cipher(block_bytes, w, nr)
-    local state = {[0]={}, [1]={}, [2]={}, [3]={}}
-    for r = 0, 3 do
-        for c = 0, 3 do
-            state[r][c] = block_bytes[c * 4 + r + 1]
-        end
-    end
-
-    add_round_key(state, w, nr)
-    for round = nr - 1, 1, -1 do
-        inv_shift_rows(state)
-        inv_sub_bytes(state)
-        add_round_key(state, w, round)
-        inv_mix_columns(state)
-    end
-    inv_shift_rows(state)
-    inv_sub_bytes(state)
-    add_round_key(state, w, 0)
-
-    local out = {}
-    for c = 0, 3 do
-        for r = 0, 3 do
-            out[c * 4 + r + 1] = state[r][c]
-        end
-    end
-    return out
+local function clean_hex(text)
+    return string.gsub(text, "[^0-9A-Fa-f]", "")
 end
 
--- Helpers
-local function str_to_bytes(str)
-    local bytes = {}
-    for i = 1, #str do
-        bytes[i] = str:byte(i)
-    end
-    return bytes
+local function hex_to_bin(hex)
+    return (string.gsub(hex, "..", function(cc)
+        return string.char(tonumber(cc, 16))
+    end))
 end
 
-local function bytes_to_str(bytes)
-    local chars = {}
-    for i = 1, #bytes do
-        chars[i] = string.char(bytes[i])
-    end
-    return table.concat(chars)
+local function bin_to_hex(bin)
+    return (string.gsub(bin, ".", function(c)
+        return string.format("%02X", string.byte(c))
+    end))
 end
 
-local function pad(bytes)
-    local p = 16 - (#bytes % 16)
-    for i = 1, p do
-        table.insert(bytes, p)
+function M.set_aes_key(opts)
+    local text = ""
+    if opts and opts.range == 0 then
+        text = vim.fn.getline(".")
+    else
+        text = get_visual_selection()
     end
-    return bytes
+
+    local hex = clean_hex(text)
+
+    if hex == "" or #hex % 2 ~= 0 then
+        vim.api.nvim_err_writeln("Selected content cannot be parsed as a valid hex string.")
+        return
+    end
+
+    if #hex ~= 32 and #hex ~= 64 then
+        vim.api.nvim_err_writeln("AES key must be 128-bit (32 hex chars) or 256-bit (64 hex chars). Current length: " .. #hex)
+        return
+    end
+
+    aes_key = hex
+    vim.api.nvim_echo({{"AES key set to: " .. aes_key, "Normal"}}, true, {})
 end
 
-local function unpad(bytes)
-    local p = bytes[#bytes]
-    for i = 1, p do
-        table.remove(bytes)
+function M.do_aes(opts, cipher, is_encrypt)
+    if not aes_key then
+        vim.api.nvim_err_writeln("AES key not set. Use RkAesKeyHex first.")
+        return
     end
-    return bytes
+
+    local expected_key_len = (cipher == "aes-128-ecb") and 32 or 64
+    if #aes_key ~= expected_key_len then
+        vim.api.nvim_err_writeln("AES key length mismatch. Expected " .. expected_key_len .. " hex chars for " .. cipher)
+        return
+    end
+
+    local text = ""
+    if opts and opts.range == 0 then
+        text = vim.fn.getline(".")
+    else
+        text = get_visual_selection()
+    end
+
+    local hex = clean_hex(text)
+
+    if hex == "" or #hex % 2 ~= 0 then
+        vim.api.nvim_err_writeln("Selected content cannot be parsed as a valid hex string.")
+        return
+    end
+
+    -- Embedded systems usually do not use PKCS#7 padding for raw hex blocks
+    local nopad_arg = "-nopad"
+
+    local bin_data = hex_to_bin(hex)
+    local tmp_in = vim.fn.tempname()
+    local tmp_out = vim.fn.tempname()
+
+    local f_in = io.open(tmp_in, "wb")
+    if not f_in then
+        vim.api.nvim_err_writeln("Failed to create temporary file.")
+        return
+    end
+    f_in:write(bin_data)
+    f_in:close()
+
+    local enc_dec_arg = is_encrypt and "-e" or "-d"
+
+    -- Command: openssl enc -aes-128-ecb -e -K <key> -in <in> -out <out> -nopad
+    local cmd = string.format('openssl enc -%s %s -K %s -in "%s" -out "%s" %s',
+        cipher, enc_dec_arg, aes_key, tmp_in, tmp_out, nopad_arg)
+
+    local handle = io.popen(cmd .. " 2>&1")
+    if not handle then
+        os.remove(tmp_in)
+        vim.api.nvim_err_writeln("Failed to execute openssl command.")
+        return
+    end
+
+    local err_output = handle:read("*a")
+    local success = handle:close()
+
+    if not success then
+        vim.api.nvim_err_writeln("OpenSSL error: " .. (err_output or "unknown error"))
+        os.remove(tmp_in)
+        os.remove(tmp_out)
+        return
+    end
+
+    local f_out = io.open(tmp_out, "rb")
+    if not f_out then
+        vim.api.nvim_err_writeln("Failed to read openssl output file.")
+        os.remove(tmp_in)
+        os.remove(tmp_out)
+        return
+    end
+
+    local out_bin = f_out:read("*a")
+    f_out:close()
+
+    os.remove(tmp_in)
+    os.remove(tmp_out)
+
+    if out_bin and #out_bin > 0 then
+        local out_hex = bin_to_hex(out_bin)
+        vim.fn.setreg("+", out_hex)
+        vim.api.nvim_echo({{"AES result copied to clipboard: " .. out_hex, "Normal"}}, true, {})
+    else
+        vim.api.nvim_err_writeln("AES operation produced no output.")
+    end
 end
 
--- API
-function M.encrypt(data, key, mode)
-    mode = mode or 128
-    local nk = mode == 256 and 8 or 4
-    local nr = mode == 256 and 14 or 10
+function M.setup()
+    vim.api.nvim_create_user_command("RkAesKeyHex", function(opts)
+        M.set_aes_key(opts)
+    end, { range = true, desc = "Set AES key from selected hex content" })
 
-    local key_bytes = str_to_bytes(key)
-    if #key_bytes < nk * 4 then
-        for i = #key_bytes + 1, nk * 4 do key_bytes[i] = 0 end
-    elseif #key_bytes > nk * 4 then
-        local new_key = {}
-        for i = 1, nk * 4 do new_key[i] = key_bytes[i] end
-        key_bytes = new_key
-    end
+    vim.api.nvim_create_user_command("RkAes128EcbEncHex", function(opts)
+        M.do_aes(opts, "aes-128-ecb", true)
+    end, { range = true, desc = "AES-128 ECB Encrypt selected hex content" })
 
-    local w = expand_key(key_bytes, nk, nr)
-    local data_bytes = pad(str_to_bytes(data))
+    vim.api.nvim_create_user_command("RkAes128EcbDecHex", function(opts)
+        M.do_aes(opts, "aes-128-ecb", false)
+    end, { range = true, desc = "AES-128 ECB Decrypt selected hex content" })
 
-    local out = {}
-    for i = 1, #data_bytes, 16 do
-        local block = {}
-        for j = 0, 15 do
-            block[j + 1] = data_bytes[i + j]
-        end
-        local c = cipher(block, w, nr)
-        for j = 1, 16 do
-            table.insert(out, c[j])
-        end
-    end
-    return bytes_to_str(out)
-end
+    vim.api.nvim_create_user_command("RkAes256EcbEncHex", function(opts)
+        M.do_aes(opts, "aes-256-ecb", true)
+    end, { range = true, desc = "AES-256 ECB Encrypt selected hex content" })
 
-function M.decrypt(data, key, mode)
-    mode = mode or 128
-    local nk = mode == 256 and 8 or 4
-    local nr = mode == 256 and 14 or 10
-
-    local key_bytes = str_to_bytes(key)
-    if #key_bytes < nk * 4 then
-        for i = #key_bytes + 1, nk * 4 do key_bytes[i] = 0 end
-    elseif #key_bytes > nk * 4 then
-        local new_key = {}
-        for i = 1, nk * 4 do new_key[i] = key_bytes[i] end
-        key_bytes = new_key
-    end
-
-    local w = expand_key(key_bytes, nk, nr)
-    local data_bytes = str_to_bytes(data)
-
-    local out = {}
-    for i = 1, #data_bytes, 16 do
-        local block = {}
-        for j = 0, 15 do
-            block[j + 1] = data_bytes[i + j]
-        end
-        local c = inv_cipher(block, w, nr)
-        for j = 1, 16 do
-            table.insert(out, c[j])
-        end
-    end
-    return bytes_to_str(unpad(out))
+    vim.api.nvim_create_user_command("RkAes256EcbDecHex", function(opts)
+        M.do_aes(opts, "aes-256-ecb", false)
+    end, { range = true, desc = "AES-256 ECB Decrypt selected hex content" })
 end
 
 return M
