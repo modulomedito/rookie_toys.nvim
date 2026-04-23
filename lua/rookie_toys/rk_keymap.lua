@@ -29,8 +29,8 @@ function M.setup()
     vim.keymap.set("c", "<C-v>", "<C-r>*")
 
     -- Normal mode
-    vim.keymap.set("n", "*", "*Nzz")
-    -- vim.keymap.set("n", "*", "*zz") -- kickstart.nvim refinement
+    -- vim.keymap.set("n", "*", "*Nzz")
+    vim.keymap.set("n", "*", "*zz") -- kickstart.nvim refinement
     -- vim.keymap.set("n", "<C-p>", ":find *")
     vim.keymap.set(
         "n",
@@ -135,7 +135,7 @@ function M.setup()
     vim.keymap.set("v", "y", "ygv<Esc>")
 
     -- Select mode
-    vim.keymap.set("x", "p", 'P')
+    vim.keymap.set("x", "p", "P")
 
     -- Git obs mapping
     vim.keymap.set("n", "<leader>obs", function()
