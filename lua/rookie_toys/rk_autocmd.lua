@@ -79,6 +79,7 @@ function M.setup()
         group = group_c,
         pattern = { "c", "cpp" },
         callback = function()
+            vim.opt_local.iskeyword:remove("-")
             vim.opt_local.tabstop = 4
             vim.opt_local.shiftwidth = 4
             vim.opt_local.expandtab = true
@@ -98,8 +99,7 @@ function M.setup()
         end,
     })
 
-    local group_help =
-        vim.api.nvim_create_augroup("RkHelp", { clear = true })
+    local group_help = vim.api.nvim_create_augroup("RkHelp", { clear = true })
     vim.api.nvim_create_autocmd("FileType", {
         group = group_help,
         pattern = "help",
