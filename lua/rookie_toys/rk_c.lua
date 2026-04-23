@@ -23,6 +23,12 @@ function M.setup()
         desc = 'Toggle between C/C++ header and source file'
     })
 
+    vim.api.nvim_create_user_command('RkCCommentToSlash', function()
+        vim.cmd('%:s/\\/\\*\\+\\s\\+\\(.*\\)\\*\\//\\/\\/ \\1/g')
+    end, {
+        desc = 'Convert C/C++ comment to slash comment'
+    })
+
     -- Set up the default keymapping
     vim.keymap.set('n', '<leader>hh', ':RkToggleHeaderSource<CR>', {
         silent = true,
