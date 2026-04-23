@@ -17,14 +17,20 @@ end
 
 function M.setup()
     -- Create the user command for toggling header/source
-    vim.api.nvim_create_user_command('RkToggleHeaderSource', function()
+    vim.api.nvim_create_user_command('RkCToggleHeaderSource', function()
         M.toggle_header_source()
     end, {
         desc = 'Toggle between C/C++ header and source file'
     })
 
+    vim.api.nvim_create_user_command('RkCCommentToSlash', function()
+        vim.cmd(':%s\\/\\/\\*\\+\\s\\+\\(.*\\)\\*\\/\\/\\/ \\1/g')
+    end, {
+        desc = 'Convert C/C++ comment to slash comment'
+    })
+
     -- Set up the default keymapping
-    vim.keymap.set('n', '<leader>hh', ':RkToggleHeaderSource<CR>', {
+    vim.keymap.set('n', '<leader>hh', ':RkCToggleHeaderSource<CR>', {
         silent = true,
         desc = 'Toggle header/source (RookieToys)'
     })
