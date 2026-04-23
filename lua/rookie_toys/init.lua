@@ -31,6 +31,7 @@ function M.setup()
     require("rookie_toys.rk_textmanip").setup()
     require("rookie_toys.rk_cmac").setup()
     require("rookie_toys.rk_aes").setup()
+    require("rookie_toys.rk_sha").setup()
     require("rookie_toys.rk_tag").setup()
     require("rookie_toys.rk_gitlab").setup()
 end
