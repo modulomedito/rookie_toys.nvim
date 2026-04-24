@@ -29,8 +29,11 @@ function M.setup()
     vim.keymap.set("c", "<C-v>", "<C-r>*")
 
     -- Normal mode
-    -- vim.keymap.set("n", "*", "*Nzz")
-    vim.keymap.set("n", "*", "*zz") -- kickstart.nvim refinement
+    if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
+        vim.keymap.set("n", "*", "*Nzz") -- windows refine
+    else
+        vim.keymap.set("n", "*", "*zz") -- macos refine
+    end
     -- vim.keymap.set("n", "<C-p>", ":find *")
     vim.keymap.set(
         "n",
