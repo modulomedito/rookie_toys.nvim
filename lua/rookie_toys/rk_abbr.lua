@@ -14,6 +14,7 @@ function M.setup()
         iabbrev xref 🦄 refactor():[#]<Left><Left><Left><Left>
         iabbrev xrev ↩ revert():[#]<Left><Left><Left><Left>
         iabbrev xsty 🌈 style():[#]<Left><Left><Left><Left>
+        iabbrev xtes 🧪 test():[#]<Left><Left><Left><Left>
     ]])
 
     -- Command abbreviations
