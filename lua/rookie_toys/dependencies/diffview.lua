@@ -9,7 +9,11 @@ function M.setup()
     end
 
     -- Setup diffview with default options if needed
-    diffview.setup({})
+    diffview.setup({
+        keymaps = {
+            disable_defaults = true,
+        },
+    })
 
     -- Keymaps
     vim.keymap.set("n", "<leader>diff", function()
