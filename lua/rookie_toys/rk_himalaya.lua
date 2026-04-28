@@ -4,7 +4,6 @@ local M = {}
 local state = {
     buf = nil,
     win = nil,
-    last_list_args = "",
 }
 
 local function create_term_buf(cmd, title)
@@ -44,42 +43,16 @@ local function create_term_buf(cmd, title)
 
     state.win = vim.api.nvim_open_win(state.buf, true, win_opts)
 
-    -- Mappings
-    vim.keymap.set("n", "q", function()
-        if state.win and vim.api.nvim_win_is_valid(state.win) then
-            vim.api.nvim_win_close(state.win, true)
-        end
-    end, { buffer = state.buf, silent = true, desc = "Close Himalaya" })
-
-    vim.keymap.set("n", "<CR>", function()
-        local line = vim.api.nvim_get_current_line()
-        local id = line:match("^%s*(%d+)")
-        if id then
-            M.read_email(id)
-        end
-    end, { buffer = state.buf, silent = true, desc = "Read Email" })
-
-    vim.keymap.set("n", "u", function()
-        M.list_envelopes(state.last_list_args)
-    end, { buffer = state.buf, silent = true, desc = "Back to List" })
-
     vim.fn.termopen(cmd, {
         on_exit = function()
-            -- Switch to normal mode on exit to allow mappings like 'q' and 'Enter'
-            vim.cmd("stopinsert")
+            -- Optionally, you can automatically close the window on success:
+            -- if code == 0 and state.win and vim.api.nvim_win_is_valid(state.win) then
+            --     vim.api.nvim_win_close(state.win, true)
+            -- end
         end,
     })
 
     vim.cmd("startinsert")
-end
-
-function M.read_email(id)
-    create_term_buf("himalaya message read " .. id, "Himalaya Read " .. id)
-end
-
-function M.list_envelopes(args)
-    state.last_list_args = args or ""
-    create_term_buf("himalaya envelope list " .. state.last_list_args, "Himalaya List")
 end
 
 function M.setup()
@@ -87,17 +60,13 @@ function M.setup()
     vim.api.nvim_create_user_command(
         "RkHimalaya",
         function(opts)
-            local cmd = "himalaya"
-            if opts.args ~= "" then
-                cmd = cmd .. " " .. opts.args
-            end
-            create_term_buf(cmd, "Himalaya")
+            create_term_buf("himalaya " .. opts.args, "Himalaya")
         end,
         { nargs = "*", desc = "Run himalaya CLI command in floating terminal" }
     )
 
     vim.api.nvim_create_user_command("RkHimalayaList", function(opts)
-        M.list_envelopes(opts.args)
+        create_term_buf("himalaya envelope list " .. opts.args, "Himalaya List")
     end, { nargs = "*", desc = "List himalaya envelopes" })
 
     vim.api.nvim_create_user_command("RkHimalayaRead", function(opts)
@@ -105,7 +74,10 @@ function M.setup()
             vim.notify("Please provide a message ID", vim.log.levels.WARN)
             return
         end
-        M.read_email(opts.args)
+        create_term_buf(
+            "himalaya message read " .. opts.args,
+            "Himalaya Read " .. opts.args
+        )
     end, { nargs = 1, desc = "Read himalaya message" })
 
     vim.api.nvim_create_user_command("RkHimalayaWrite", function()

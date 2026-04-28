@@ -34,7 +34,7 @@ function M.setup()
     require("rookie_toys.rk_sha").setup()
     require("rookie_toys.rk_tag").setup()
     require("rookie_toys.rk_gitlab").setup()
-    -- require("rookie_toys.rk_himalaya").setup()
+    require("rookie_toys.rk_himalaya").setup()
 end
 
 return M

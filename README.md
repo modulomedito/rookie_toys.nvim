@@ -35,8 +35,6 @@ Use lazy.nvim to install this plugin.
     'tpope/vim-surround', -- Edit surrounding characters
     'sphamba/smear-cursor.nvim', -- Cursor trail animation
     'stevearc/oil.nvim', -- File explorer
-    'knownasnaffy/himalaya.nvim', -- Email
-    'MunifTanjim/nui.nvim',
   },
   config = function()
     vim.g.rookie_toys_ai_model = "gemma2:9b"
