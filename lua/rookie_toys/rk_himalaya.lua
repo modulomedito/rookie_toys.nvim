@@ -1,33 +1,110 @@
 local M = {}
 
--- State
+-- State management for the Himalaya UI
 local state = {
-    buf = nil,
-    win = nil,
+    folders_buf = nil,
+    folders_win = nil,
+    envelopes_buf = nil,
+    envelopes_win = nil,
+    message_buf = nil,
+    message_win = nil,
+    current_folder = "INBOX",
+    current_page = 1, -- Start at 1, as most CLIs use 1-based indexing
+    page_size = 10,
+    envelopes = {}, -- Store full envelope objects for reference
 }
 
-local function create_term_buf(cmd, title)
+local function strip_ansi_escape_codes(output)
+    if type(output) ~= "string" or output == "" then return output end
+    return output:gsub("\27%[[%d;?]*[%a]", "")
+end
+
+local function decode_himalaya_json(output)
+    if type(output) ~= "string" or output == "" then return nil end
+
+    local trimmed = vim.trim(strip_ansi_escape_codes(output))
+    local json_start = trimmed:find("[%[%{%\"]")
+    if not json_start then return nil end
+
+    local json_payload = trimmed:sub(json_start)
+    local ok, decoded = pcall(vim.fn.json_decode, json_payload)
+    if not ok then return nil end
+
+    if type(decoded) == "table" and not vim.islist(decoded) then
+        if decoded.envelopes then return decoded.envelopes end
+        if decoded.folders then return decoded.folders end
+        if decoded.messages then return decoded.messages end
+        if decoded.message then return decoded.message end
+    end
+
+    return decoded
+end
+
+local function format_contact(contact)
+    if type(contact) == "string" and contact ~= "" then return contact end
+    if type(contact) ~= "table" then return "Unknown" end
+
+    local name = contact.name
+    local addr = contact.addr or contact.address or contact.email
+
+    if name and name ~= "" and addr and addr ~= "" then
+        return string.format("%s <%s>", name, addr)
+    end
+    if name and name ~= "" then return name end
+    if addr and addr ~= "" then return addr end
+
+    return "Unknown"
+end
+
+-- Utility: Run himalaya CLI and return JSON
+local function run_himalaya(args)
     if vim.fn.executable("himalaya") == 0 then
-        vim.notify(
-            "himalaya CLI not found. Please install it first.",
-            vim.log.levels.ERROR
-        )
-        return
+        vim.notify("himalaya CLI not found. Please install it first.", vim.log.levels.ERROR)
+        return nil
     end
 
-    if state.win and vim.api.nvim_win_is_valid(state.win) then
-        vim.api.nvim_win_close(state.win, true)
-    end
-    if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
-        vim.api.nvim_buf_delete(state.buf, { force = true })
+    -- Try both global and subcommand output flag (v1 vs v2)
+    local cmds = {
+        "himalaya --quiet --output json " .. args,
+        "himalaya --quiet -o json " .. args,
+        "himalaya " .. args .. " --quiet --output json",
+    }
+
+    local last_result = ""
+    for _, cmd in ipairs(cmds) do
+        local result = vim.fn.system(cmd)
+        if vim.v.shell_error == 0 and result ~= "" then
+            local decoded = decode_himalaya_json(result)
+            if decoded ~= nil then return decoded end
+        end
+        last_result = result
     end
 
-    state.buf = vim.api.nvim_create_buf(false, true)
+    -- If we reach here, either it's not JSON or all commands failed
+    if last_result ~= "" and not last_result:find("no envelopes found") then
+        -- If it's not JSON but successful, it might be raw text
+        if vim.v.shell_error == 0 then return last_result end
+    end
 
-    local width = math.floor(vim.o.columns * 0.8)
-    local height = math.floor(vim.o.lines * 0.8)
-    local col = math.floor((vim.o.columns - width) / 2)
-    local row = math.floor((vim.o.lines - height) / 2)
+    return nil
+end
+
+-- UI Helpers: Create a buffer with specific settings
+local function create_buffer(name, filetype)
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_name(buf, name)
+    vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
+    vim.api.nvim_buf_set_option(buf, "swapfile", false)
+    vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe")
+    vim.api.nvim_buf_set_option(buf, "filetype", filetype)
+    return buf
+end
+
+local function create_floating_win(buf, opts)
+    local width = opts.width or math.floor(vim.o.columns * 0.8)
+    local height = opts.height or math.floor(vim.o.lines * 0.8)
+    local col = opts.col or math.floor((vim.o.columns - width) / 2)
+    local row = opts.row or math.floor((vim.o.lines - height) / 2)
 
     local win_opts = {
         relative = "editor",
@@ -37,85 +114,282 @@ local function create_term_buf(cmd, title)
         row = row,
         style = "minimal",
         border = "rounded",
-        title = " " .. (title or "Himalaya") .. " ",
+        title = opts.title and (" " .. opts.title .. " ") or nil,
         title_pos = "center",
     }
 
-    state.win = vim.api.nvim_open_win(state.buf, true, win_opts)
+    return vim.api.nvim_open_win(buf, true, win_opts)
+end
 
-    vim.fn.termopen(cmd, {
-        on_exit = function()
-            -- Optionally, you can automatically close the window on success:
-            -- if code == 0 and state.win and vim.api.nvim_win_is_valid(state.win) then
-            --     vim.api.nvim_win_close(state.win, true)
-            -- end
-        end,
+-- Fetch and render folders in the sidebar
+function M.fetch_folders()
+    if not state.folders_buf or not vim.api.nvim_buf_is_valid(state.folders_buf) then return end
+
+    local folders = run_himalaya("folder list")
+    if not folders then return end
+
+    -- Ensure folders is a list
+    if type(folders) == "table" and not vim.islist(folders) then
+        folders = { folders }
+    end
+
+    local lines = {}
+    for _, folder in ipairs(folders) do
+        local name = folder.name or folder.id or tostring(folder)
+        local prefix = (name == state.current_folder) and "→ " or "  "
+        table.insert(lines, prefix .. name)
+    end
+
+    vim.api.nvim_buf_set_option(state.folders_buf, "modifiable", true)
+    vim.api.nvim_buf_set_lines(state.folders_buf, 0, -1, false, lines)
+    vim.api.nvim_buf_set_option(state.folders_buf, "modifiable", false)
+end
+
+-- Fetch and render envelopes for the current folder
+function M.fetch_envelopes(folder, page)
+    if not state.envelopes_buf or not vim.api.nvim_buf_is_valid(state.envelopes_buf) then return end
+
+    if folder then
+        state.current_folder = folder
+        state.current_page = 1
+    end
+
+    if page then
+        state.current_page = math.max(1, page)
+    end
+
+    -- Try multiple command variations for envelopes
+    local escaped_folder = vim.fn.shellescape(state.current_folder)
+    local variations = {
+        string.format("envelope list --folder %s --page %d", escaped_folder, state.current_page),
+        string.format("list --folder %s --page %d", escaped_folder, state.current_page),
+        string.format("envelope list --folder %s", escaped_folder), -- Fallback without page
+        "envelope list", -- Ultimate fallback
+    }
+
+    local envelopes = nil
+    for _, args in ipairs(variations) do
+        envelopes = run_himalaya(args)
+        if envelopes and type(envelopes) == "table" and #envelopes > 0 then
+            break
+        end
+    end
+
+    if not envelopes or type(envelopes) ~= "table" or #envelopes == 0 then
+        if state.current_page > 1 then
+            state.current_page = state.current_page - 1
+            vim.notify("No more pages", vim.log.levels.INFO)
+        else
+            vim.api.nvim_buf_set_option(state.envelopes_buf, "modifiable", true)
+            vim.api.nvim_buf_set_lines(state.envelopes_buf, 0, -1, false, { "  (No envelopes found in " .. state.current_folder .. ")" })
+            vim.api.nvim_buf_set_option(state.envelopes_buf, "modifiable", false)
+        end
+        return
+    end
+
+    state.envelopes = envelopes
+    local lines = {}
+    for _, env in ipairs(envelopes) do
+        -- Format: [ID] Sender | Subject | Date
+        -- Try to handle both v1 and v2 property names
+        local sender = format_contact(env.sender or env.from)
+        local subject = env.subject or "(No Subject)"
+        local date = env.date or ""
+        local id = env.id or env.number or "?"
+        local line = string.format(" %-6s | %-30s | %s | %s", id, sender, subject, date)
+        table.insert(lines, line)
+    end
+
+    vim.api.nvim_buf_set_option(state.envelopes_buf, "modifiable", true)
+    vim.api.nvim_buf_set_lines(state.envelopes_buf, 0, -1, false, lines)
+    vim.api.nvim_buf_set_option(state.envelopes_buf, "modifiable", false)
+
+    -- Update folder highlights
+    M.fetch_folders()
+end
+
+function M.next_page()
+    M.fetch_envelopes(nil, state.current_page + 1)
+end
+
+function M.prev_page()
+    if state.current_page > 1 then
+        M.fetch_envelopes(nil, state.current_page - 1)
+    else
+        vim.notify("Already on the first page", vim.log.levels.INFO)
+    end
+end
+
+-- Read a specific message
+function M.read_message(id)
+    if not id then
+        local cursor = vim.api.nvim_win_get_cursor(state.envelopes_win)
+        local idx = cursor[1]
+        if state.envelopes[idx] then
+            id = state.envelopes[idx].id
+        end
+    end
+
+    if not id then return end
+
+    -- Ensure message window exists
+    if not state.message_win or not vim.api.nvim_win_is_valid(state.message_win) then
+        state.message_buf = create_buffer("HimalayaMessage", "mail")
+        state.message_win = create_floating_win(state.message_buf, {
+            width = math.floor(vim.o.columns * 0.8),
+            height = math.floor(vim.o.lines * 0.8),
+            title = "Message",
+        })
+    end
+
+    local message = run_himalaya("message read " .. id)
+    if not message then return end
+
+    local content = ""
+    if type(message) == "table" then
+        content = message.content or message.body or vim.inspect(message)
+    else
+        content = message
+    end
+
+    local lines = vim.split(content, "\n")
+    vim.api.nvim_buf_set_option(state.message_buf, "modifiable", true)
+    vim.api.nvim_buf_set_lines(state.message_buf, 0, -1, false, lines)
+    vim.api.nvim_buf_set_option(state.message_buf, "modifiable", false)
+end
+
+function M.reload()
+    M.fetch_folders()
+    M.fetch_envelopes()
+end
+
+-- Open the main Himalaya UI
+function M.open()
+    -- Create buffers if they don't exist
+    state.folders_buf = create_buffer("HimalayaFolders", "himalaya-folders")
+    state.envelopes_buf = create_buffer("HimalayaEnvelopes", "himalaya-envelopes")
+
+    local total_width = math.floor(vim.o.columns * 0.9)
+    local total_height = math.floor(vim.o.lines * 0.85)
+    local start_col = math.floor((vim.o.columns - total_width) / 2)
+    local start_row = math.floor((vim.o.lines - total_height) / 2)
+
+    local folders_width = 25
+
+    -- 1. Folders Sidebar (Floating)
+    state.folders_win = create_floating_win(state.folders_buf, {
+        width = folders_width,
+        height = total_height,
+        col = start_col,
+        row = start_row,
+        title = "Folders",
     })
+    vim.api.nvim_win_set_option(state.folders_win, "number", false)
+    vim.api.nvim_win_set_option(state.folders_win, "relativenumber", false)
 
-    vim.cmd("startinsert")
+    -- 2. Envelopes List (Floating)
+    state.envelopes_win = create_floating_win(state.envelopes_buf, {
+        width = total_width - folders_width - 2,
+        height = total_height,
+        col = start_col + folders_width + 2,
+        row = start_row,
+        title = "Envelopes",
+    })
+    vim.api.nvim_win_set_option(state.envelopes_win, "number", false)
+
+    -- Initial data fetch
+    M.fetch_folders()
+    M.fetch_envelopes(state.current_folder)
+end
+
+-- Close the Himalaya UI
+function M.close()
+    if state.folders_win and vim.api.nvim_win_is_valid(state.folders_win) then
+        vim.api.nvim_win_close(state.folders_win, true)
+    end
+    if state.envelopes_win and vim.api.nvim_win_is_valid(state.envelopes_win) then
+        vim.api.nvim_win_close(state.envelopes_win, true)
+    end
+    if state.message_win and vim.api.nvim_win_is_valid(state.message_win) then
+        vim.api.nvim_win_close(state.message_win, true)
+    end
+    state.folders_win = nil
+    state.envelopes_win = nil
+    state.message_win = nil
+    state.folders_buf = nil
+    state.envelopes_buf = nil
+    state.message_buf = nil
+end
+
+function M.close_message()
+    if state.message_win and vim.api.nvim_win_is_valid(state.message_win) then
+        vim.api.nvim_win_close(state.message_win, true)
+        state.message_win = nil
+        state.message_buf = nil
+    end
+end
+
+-- Select item under cursor (folder or envelope)
+function M.select_item()
+    local curr_win = vim.api.nvim_get_current_win()
+    if curr_win == state.folders_win then
+        local cursor = vim.api.nvim_win_get_cursor(state.folders_win)
+        local line = vim.api.nvim_buf_get_lines(state.folders_buf, cursor[1]-1, cursor[1], false)[1]
+        local folder = line:gsub("^%s*→%s*", ""):gsub("^%s*", "")
+        M.fetch_envelopes(folder)
+        -- Move focus to envelopes window after selecting folder
+        if state.envelopes_win and vim.api.nvim_win_is_valid(state.envelopes_win) then
+            vim.api.nvim_set_current_win(state.envelopes_win)
+        end
+    elseif curr_win == state.envelopes_win then
+        M.read_message()
+    end
 end
 
 function M.setup()
-    -- Commands
-    vim.api.nvim_create_user_command(
-        "RkHimalaya",
-        function(opts)
-            create_term_buf("himalaya " .. opts.args, "Himalaya")
-        end,
-        { nargs = "*", desc = "Run himalaya CLI command in floating terminal" }
-    )
+    -- Main command to open the UI
+    vim.api.nvim_create_user_command("RkHimalaya", function()
+        M.open()
+    end, { desc = "Open Himalaya Email Client" })
 
+    -- Legacy/Additional commands (keeping them but they now use the UI or terminal as fallback)
     vim.api.nvim_create_user_command("RkHimalayaList", function(opts)
-        create_term_buf("himalaya envelope list " .. opts.args, "Himalaya List")
+        if opts.args ~= "" then
+            M.fetch_envelopes(opts.args)
+        else
+            M.open()
+        end
     end, { nargs = "*", desc = "List himalaya envelopes" })
 
-    vim.api.nvim_create_user_command("RkHimalayaRead", function(opts)
-        if opts.args == "" then
-            vim.notify("Please provide a message ID", vim.log.levels.WARN)
-            return
-        end
-        create_term_buf(
-            "himalaya message read " .. opts.args,
-            "Himalaya Read " .. opts.args
-        )
-    end, { nargs = 1, desc = "Read himalaya message" })
+    -- For composing/replying, we might still want the terminal for interactive editing
+    local function run_in_term(cmd, title)
+        local buf = vim.api.nvim_create_buf(false, true)
+        local width = math.floor(vim.o.columns * 0.8)
+        local height = math.floor(vim.o.lines * 0.8)
+        local win_opts = {
+            relative = "editor",
+            width = width, height = height,
+            col = math.floor((vim.o.columns - width) / 2),
+            row = math.floor((vim.o.lines - height) / 2),
+            style = "minimal", border = "rounded",
+            title = " " .. title .. " ", title_pos = "center",
+        }
+        vim.api.nvim_open_win(buf, true, win_opts)
+        vim.fn.termopen(cmd)
+        vim.cmd("startinsert")
+    end
 
     vim.api.nvim_create_user_command("RkHimalayaWrite", function()
-        create_term_buf("himalaya message write", "Himalaya Write")
+        run_in_term("himalaya message write", "Himalaya Write")
     end, { desc = "Write himalaya message" })
 
     vim.api.nvim_create_user_command("RkHimalayaReply", function(opts)
-        if opts.args == "" then
-            vim.notify("Please provide a message ID", vim.log.levels.WARN)
-            return
-        end
-        create_term_buf(
-            "himalaya message reply " .. opts.args,
-            "Himalaya Reply " .. opts.args
-        )
+        run_in_term("himalaya message reply " .. opts.args, "Himalaya Reply")
     end, { nargs = 1, desc = "Reply to himalaya message" })
 
-    vim.api.nvim_create_user_command("RkHimalayaForward", function(opts)
-        if opts.args == "" then
-            vim.notify("Please provide a message ID", vim.log.levels.WARN)
-            return
-        end
-        create_term_buf(
-            "himalaya message forward " .. opts.args,
-            "Himalaya Forward " .. opts.args
-        )
-    end, { nargs = 1, desc = "Forward himalaya message" })
-
-    vim.api.nvim_create_user_command("RkHimalayaDelete", function(opts)
-        if opts.args == "" then
-            vim.notify("Please provide a message ID", vim.log.levels.WARN)
-            return
-        end
-        create_term_buf(
-            "himalaya message delete " .. opts.args,
-            "Himalaya Delete " .. opts.args
-        )
-    end, { nargs = 1, desc = "Delete himalaya message" })
+    vim.api.nvim_create_user_command("RkHimalayaClose", function()
+        M.close()
+    end, { desc = "Close Himalaya UI" })
 end
 
 return M
