@@ -8,11 +8,15 @@ local state = {
     envelopes_win = nil,
     message_buf = nil,
     message_win = nil,
+    help_buf = nil,
+    help_win = nil,
     current_folder = "INBOX",
     current_page = 1, -- Start at 1, as most CLIs use 1-based indexing
     page_size = 10,
     envelopes = {}, -- Store full envelope objects for reference
 }
+
+local envelope_table_header_lines = 2
 
 local function strip_ansi_escape_codes(output)
     if type(output) ~= "string" or output == "" then return output end
@@ -225,6 +229,13 @@ local function create_floating_win(buf, opts)
     return vim.api.nvim_open_win(buf, true, win_opts)
 end
 
+local function set_buffer_keymaps(buf, mappings)
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then return end
+    for lhs, rhs in pairs(mappings) do
+        vim.keymap.set("n", lhs, rhs, { buffer = buf, silent = true, nowait = true })
+    end
+end
+
 -- Fetch and render folders in the sidebar
 function M.fetch_folders()
     if not state.folders_buf or not vim.api.nvim_buf_is_valid(state.folders_buf) then return end
@@ -322,7 +333,7 @@ end
 function M.read_message(id)
     if not id then
         local cursor = vim.api.nvim_win_get_cursor(state.envelopes_win)
-        local idx = cursor[1]
+        local idx = cursor[1] - envelope_table_header_lines
         if state.envelopes[idx] then
             id = state.envelopes[idx].id
         end
@@ -337,6 +348,11 @@ function M.read_message(id)
             width = math.floor(vim.o.columns * 0.8),
             height = math.floor(vim.o.lines * 0.8),
             title = "Message",
+        })
+        set_buffer_keymaps(state.message_buf, {
+            ["g?"] = function()
+                M.show_help()
+            end,
         })
     end
 
@@ -354,6 +370,56 @@ function M.read_message(id)
     vim.api.nvim_buf_set_option(state.message_buf, "modifiable", true)
     vim.api.nvim_buf_set_lines(state.message_buf, 0, -1, false, lines)
     vim.api.nvim_buf_set_option(state.message_buf, "modifiable", false)
+end
+
+function M.show_help()
+    local help_lines = {
+        "# Himalaya Keymaps",
+        "",
+        "| Key | Action |",
+        "| --- | ------ |",
+        "| `<CR>` | Open selected folder or envelope |",
+        "| `g?` | Show this help window |",
+        "| `:RkHimalaya` | Open the Himalaya UI |",
+        "| `:RkHimalayaClose` | Close the Himalaya UI |",
+        "| `:RkHimalayaWrite` | Compose a new mail |",
+        "| `:RkHimalayaReply {id}` | Reply in terminal mode |",
+        "",
+        "Press `q` or `<Esc>` to close this help.",
+    }
+
+    if state.help_win and vim.api.nvim_win_is_valid(state.help_win) then
+        vim.api.nvim_set_current_win(state.help_win)
+        return
+    end
+
+    state.help_buf = create_buffer("HimalayaHelp", "markdown")
+    vim.api.nvim_buf_set_option(state.help_buf, "modifiable", true)
+    vim.api.nvim_buf_set_lines(state.help_buf, 0, -1, false, help_lines)
+    vim.api.nvim_buf_set_option(state.help_buf, "modifiable", false)
+
+    state.help_win = create_floating_win(state.help_buf, {
+        width = math.min(72, math.floor(vim.o.columns * 0.7)),
+        height = math.min(16, math.floor(vim.o.lines * 0.6)),
+        title = "Himalaya Help",
+    })
+
+    set_buffer_keymaps(state.help_buf, {
+        q = function()
+            if state.help_win and vim.api.nvim_win_is_valid(state.help_win) then
+                vim.api.nvim_win_close(state.help_win, true)
+            end
+            state.help_win = nil
+            state.help_buf = nil
+        end,
+        ["<Esc>"] = function()
+            if state.help_win and vim.api.nvim_win_is_valid(state.help_win) then
+                vim.api.nvim_win_close(state.help_win, true)
+            end
+            state.help_win = nil
+            state.help_buf = nil
+        end,
+    })
 end
 
 function M.reload()
@@ -395,6 +461,24 @@ function M.open()
     })
     vim.api.nvim_win_set_option(state.envelopes_win, "number", false)
 
+    set_buffer_keymaps(state.folders_buf, {
+        ["<CR>"] = function()
+            M.select_item()
+        end,
+        ["g?"] = function()
+            M.show_help()
+        end,
+    })
+
+    set_buffer_keymaps(state.envelopes_buf, {
+        ["<CR>"] = function()
+            M.select_item()
+        end,
+        ["g?"] = function()
+            M.show_help()
+        end,
+    })
+
     -- Initial data fetch
     M.fetch_folders()
     M.fetch_envelopes(state.current_folder)
@@ -411,12 +495,17 @@ function M.close()
     if state.message_win and vim.api.nvim_win_is_valid(state.message_win) then
         vim.api.nvim_win_close(state.message_win, true)
     end
+    if state.help_win and vim.api.nvim_win_is_valid(state.help_win) then
+        vim.api.nvim_win_close(state.help_win, true)
+    end
     state.folders_win = nil
     state.envelopes_win = nil
     state.message_win = nil
+    state.help_win = nil
     state.folders_buf = nil
     state.envelopes_buf = nil
     state.message_buf = nil
+    state.help_buf = nil
 end
 
 function M.close_message()
