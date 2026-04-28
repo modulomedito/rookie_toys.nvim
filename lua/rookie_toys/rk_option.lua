@@ -21,7 +21,11 @@ function M.setup()
 
     if vim.fn.has("gui_running") == 1 or vim.g.neovide then
         pcall(function()
-            vim.opt.guifont = "Agave Nerd Font:h12"
+            if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
+                vim.opt.guifont = "Agave Nerd Font:h12"
+            else
+                vim.opt.guifont = "Agave Nerd Font:h16"
+            end
             vim.opt.guioptions:append("k")
             vim.opt.guioptions:remove("L")
             vim.opt.guioptions:remove("T")
@@ -80,8 +84,12 @@ function M.setup()
         vim.opt.shadafile = vim.fn.expand("$HOME/vimfiles/main.shada")
 
         -- Fix Windows shell issues (especially for paths with spaces)
-        if vim.fn.executable("pwsh") == 1 or vim.fn.executable("powershell") == 1 then
-            local pwsh = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell"
+        if
+            vim.fn.executable("pwsh") == 1
+            or vim.fn.executable("powershell") == 1
+        then
+            local pwsh = vim.fn.executable("pwsh") == 1 and "pwsh"
+                or "powershell"
             vim.opt.shell = pwsh
             vim.opt.shellcmdflag =
                 "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;"
@@ -93,7 +101,7 @@ function M.setup()
             vim.opt.shell = "cmd.exe"
             vim.opt.shellcmdflag = "/s /c"
             vim.opt.shellquote = ""
-            vim.opt.shellxquote = "\""
+            vim.opt.shellxquote = '"'
         end
 
         -- Ensure git executable is found without space issues for fugitive
