@@ -193,6 +193,57 @@ local function format_message_lines(message)
     return lines
 end
 
+local function get_buf_clients(bufnr, name)
+    local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
+    local clients = get_clients({ bufnr = bufnr })
+    if not name then return clients end
+
+    local matched = {}
+    for _, client in ipairs(clients) do
+        if client.name == name then
+            table.insert(matched, client)
+        end
+    end
+    return matched
+end
+
+local function maybe_format_markdown_lines(lines)
+    if vim.fn.executable("marksman") == 0 then return lines end
+    if type(vim.lsp) ~= "table" or type(vim.lsp.buf) ~= "table" or type(vim.lsp.buf.format) ~= "function" then
+        return lines
+    end
+
+    local temp_buf = vim.api.nvim_create_buf(true, false)
+    local temp_name = vim.fn.tempname() .. ".md"
+
+    vim.api.nvim_buf_set_name(temp_buf, temp_name)
+    vim.api.nvim_buf_set_option(temp_buf, "bufhidden", "wipe")
+    vim.api.nvim_buf_set_option(temp_buf, "swapfile", false)
+    vim.api.nvim_buf_set_lines(temp_buf, 0, -1, false, lines)
+    vim.api.nvim_buf_set_option(temp_buf, "filetype", "markdown")
+
+    vim.wait(1000, function()
+        return #get_buf_clients(temp_buf, "marksman") > 0
+    end, 50)
+
+    pcall(vim.lsp.buf.format, {
+        bufnr = temp_buf,
+        name = "marksman",
+        async = false,
+        timeout_ms = 1000,
+    })
+
+    local formatted = vim.api.nvim_buf_is_valid(temp_buf)
+            and vim.api.nvim_buf_get_lines(temp_buf, 0, -1, false)
+        or lines
+
+    if vim.api.nvim_buf_is_valid(temp_buf) then
+        vim.api.nvim_buf_delete(temp_buf, { force = true })
+    end
+
+    return formatted
+end
+
 local function truncate_display(text, max_width)
     text = tostring(text or "")
     if max_width <= 0 then return "" end
@@ -497,6 +548,7 @@ function M.read_message(id)
     if not message then return end
 
     local lines = format_message_lines(message)
+    lines = maybe_format_markdown_lines(lines)
     vim.api.nvim_buf_set_option(state.message_buf, "modifiable", true)
     vim.api.nvim_buf_set_lines(state.message_buf, 0, -1, false, lines)
     vim.api.nvim_buf_set_option(state.message_buf, "modifiable", false)
