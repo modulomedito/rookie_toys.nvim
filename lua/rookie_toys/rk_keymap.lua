@@ -30,7 +30,7 @@ function M.setup()
 
     -- Normal mode
     if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
-        vim.keymap.set("n", "*", "*Nzz") -- windows refine
+        vim.keymap.set("n", "*", "*zz") -- windows refine
     else
         vim.keymap.set("n", "*", "*zz") -- macos refine
     end
@@ -98,6 +98,9 @@ function M.setup()
         silent = true,
     })
     vim.keymap.set("n", "_", ":vertical resize -2<CR>", {
+        silent = true,
+    })
+    vim.keymap.set("n", "<leader>tm", "<cmd>vs|term<CR>", {
         silent = true,
     })
 
