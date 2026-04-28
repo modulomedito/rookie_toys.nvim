@@ -44,16 +44,153 @@ local function decode_himalaya_json(output)
     return decoded
 end
 
-local function format_contact_name(contact)
+local function format_contact_name(contact, full)
+    if not contact then return "Unknown" end
     if type(contact) == "string" and contact ~= "" then return contact end
-    if type(contact) ~= "table" then return "Unknown" end
 
-    if contact.name and contact.name ~= "" then return contact.name end
-    if contact.addr and contact.addr ~= "" then return contact.addr end
-    if contact.address and contact.address ~= "" then return contact.address end
-    if contact.email and contact.email ~= "" then return contact.email end
+    -- Handle list of contacts (common in To/Cc/From)
+    if type(contact) == "table" and vim.islist(contact) then
+        if #contact == 0 then return "Unknown" end
+        if full then
+            -- For full format in a list context, we usually handle items individually,
+            -- but if called on the list itself, we'll just take the first one.
+            contact = contact[1]
+        else
+            -- For short format, just take the first one
+            contact = contact[1]
+        end
+    end
+
+    if type(contact) ~= "table" then return tostring(contact) end
+
+    local name = contact.name or ""
+    local addr = contact.addr or contact.address or contact.email or ""
+
+    if full then
+        if name ~= "" and addr ~= "" then
+            return string.format("%s<%s>", name, addr)
+        elseif name ~= "" then
+            return name
+        elseif addr ~= "" then
+            return addr
+        end
+    else
+        if name ~= "" then return name end
+        if addr ~= "" then return addr end
+    end
 
     return "Unknown"
+end
+
+local function split_contact_list(contacts)
+    if not contacts then return {} end
+    if type(contacts) == "string" then
+        local parts = vim.split(contacts, ", ", { plain = true, trimempty = true })
+        if #parts == 0 then return { contacts } end
+        return parts
+    end
+    if type(contacts) == "table" then
+        if vim.islist(contacts) then return contacts end
+        return { contacts }
+    end
+    return { tostring(contacts) }
+end
+
+local function append_contact_list(lines, label, contacts)
+    local list = split_contact_list(contacts)
+    if #list == 0 then return end
+
+    table.insert(lines, "- " .. label .. ":")
+    for _, contact in ipairs(list) do
+        table.insert(lines, "  - " .. format_contact_name(contact, true))
+    end
+end
+
+local function format_message_lines(message)
+    if type(message) == "table" then
+        local lines = {}
+
+        if message.subject and message.subject ~= "" then
+            table.insert(lines, "# " .. message.subject)
+            table.insert(lines, "")
+        end
+
+        if message.from then
+            table.insert(lines, "- From: " .. format_contact_name(message.from, true))
+        end
+        append_contact_list(lines, "To", message.to)
+        append_contact_list(lines, "Cc", message.cc)
+        append_contact_list(lines, "Bcc", message.bcc)
+        if message.date and message.date ~= "" then
+            table.insert(lines, "- Date: " .. message.date)
+        end
+
+        if #lines > 0 then
+            table.insert(lines, "")
+            table.insert(lines, "---")
+            table.insert(lines, "")
+        end
+
+        local body = message.content or message.body or vim.inspect(message)
+        vim.list_extend(lines, vim.split(body, "\n", { plain = true }))
+        return lines
+    end
+
+    if type(message) ~= "string" then
+        return vim.split(vim.inspect(message), "\n", { plain = true })
+    end
+
+    local raw_lines = vim.split(message, "\n", { plain = true })
+    local headers = {}
+    local body_start = #raw_lines + 1
+    local current_header = nil
+
+    for index, line in ipairs(raw_lines) do
+        if line == "" then
+            body_start = index + 1
+            break
+        end
+
+        if current_header and line:match("^%s+") then
+            headers[current_header] = (headers[current_header] or "") .. " " .. vim.trim(line)
+        else
+            local key, value = line:match("^([%w%-]+):%s*(.*)$")
+            if not key then
+                return raw_lines
+            end
+            current_header = key:lower()
+            headers[current_header] = value
+        end
+    end
+
+    if next(headers) == nil then return raw_lines end
+
+    local lines = {}
+    if headers.subject and headers.subject ~= "" then
+        table.insert(lines, "# " .. headers.subject)
+        table.insert(lines, "")
+    end
+    if headers.from and headers.from ~= "" then
+        table.insert(lines, "- From: " .. headers.from)
+    end
+    append_contact_list(lines, "To", headers.to)
+    append_contact_list(lines, "Cc", headers.cc)
+    append_contact_list(lines, "Bcc", headers.bcc)
+    if headers.date and headers.date ~= "" then
+        table.insert(lines, "- Date: " .. headers.date)
+    end
+
+    if #lines > 0 then
+        table.insert(lines, "")
+        table.insert(lines, "---")
+        table.insert(lines, "")
+    end
+
+    for index = body_start, #raw_lines do
+        table.insert(lines, raw_lines[index])
+    end
+
+    return lines
 end
 
 local function truncate_display(text, max_width)
@@ -359,14 +496,7 @@ function M.read_message(id)
     local message = run_himalaya("message read " .. id)
     if not message then return end
 
-    local content = ""
-    if type(message) == "table" then
-        content = message.content or message.body or vim.inspect(message)
-    else
-        content = message
-    end
-
-    local lines = vim.split(content, "\n")
+    local lines = format_message_lines(message)
     vim.api.nvim_buf_set_option(state.message_buf, "modifiable", true)
     vim.api.nvim_buf_set_lines(state.message_buf, 0, -1, false, lines)
     vim.api.nvim_buf_set_option(state.message_buf, "modifiable", false)
