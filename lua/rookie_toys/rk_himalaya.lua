@@ -207,6 +207,31 @@ local function get_buf_clients(bufnr, name)
     return matched
 end
 
+local function start_marksman_for_buf(bufnr, filename)
+    local root_dir = (vim.fs and vim.fs.dirname and vim.fs.dirname(filename))
+        or vim.fn.fnamemodify(filename, ":h")
+
+    if type(vim.lsp.start) == "function" then
+        return vim.lsp.start({
+            name = "marksman",
+            cmd = { "marksman", "server" },
+            root_dir = root_dir,
+        }, { bufnr = bufnr })
+    end
+
+    if type(vim.lsp.start_client) == "function" and type(vim.lsp.buf_attach_client) == "function" then
+        local client_id = vim.lsp.start_client({
+            name = "marksman",
+            cmd = { "marksman", "server" },
+            root_dir = root_dir,
+        })
+        if client_id then
+            vim.lsp.buf_attach_client(bufnr, client_id)
+        end
+        return client_id
+    end
+end
+
 local function maybe_format_markdown_lines(lines)
     if vim.fn.executable("marksman") == 0 then return lines end
     if type(vim.lsp) ~= "table" or type(vim.lsp.buf) ~= "table" or type(vim.lsp.buf.format) ~= "function" then
@@ -215,23 +240,33 @@ local function maybe_format_markdown_lines(lines)
 
     local temp_buf = vim.api.nvim_create_buf(true, false)
     local temp_name = vim.fn.tempname() .. ".md"
+    local started_client_id
 
+    vim.fn.writefile(lines, temp_name)
     vim.api.nvim_buf_set_name(temp_buf, temp_name)
     vim.api.nvim_buf_set_option(temp_buf, "bufhidden", "wipe")
     vim.api.nvim_buf_set_option(temp_buf, "swapfile", false)
-    vim.api.nvim_buf_set_lines(temp_buf, 0, -1, false, lines)
     vim.api.nvim_buf_set_option(temp_buf, "filetype", "markdown")
+    vim.api.nvim_buf_set_lines(temp_buf, 0, -1, false, lines)
+
+    if #get_buf_clients(temp_buf, "marksman") == 0 then
+        started_client_id = start_marksman_for_buf(temp_buf, temp_name)
+    end
 
     vim.wait(1000, function()
         return #get_buf_clients(temp_buf, "marksman") > 0
     end, 50)
 
-    pcall(vim.lsp.buf.format, {
-        bufnr = temp_buf,
-        name = "marksman",
-        async = false,
-        timeout_ms = 1000,
-    })
+    if #get_buf_clients(temp_buf, "marksman") > 0 then
+        pcall(vim.lsp.buf.format, {
+            bufnr = temp_buf,
+            async = false,
+            timeout_ms = 1000,
+            filter = function(client)
+                return client.name == "marksman"
+            end,
+        })
+    end
 
     local formatted = vim.api.nvim_buf_is_valid(temp_buf)
             and vim.api.nvim_buf_get_lines(temp_buf, 0, -1, false)
@@ -240,6 +275,10 @@ local function maybe_format_markdown_lines(lines)
     if vim.api.nvim_buf_is_valid(temp_buf) then
         vim.api.nvim_buf_delete(temp_buf, { force = true })
     end
+    if started_client_id and vim.lsp.get_client_by_id(started_client_id) then
+        vim.lsp.stop_client(started_client_id)
+    end
+    vim.fn.delete(temp_name)
 
     return formatted
 end
