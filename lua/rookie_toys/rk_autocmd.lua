@@ -111,24 +111,6 @@ function M.setup()
             })
         end,
     })
-
-    -- DiffviewFiles
-    local group_diffview_files =
-        vim.api.nvim_create_augroup("RkDiffviewFiles", { clear = true })
-    vim.api.nvim_create_autocmd("FileType", {
-        group = group_diffview_files,
-        pattern = "DiffviewFiles",
-        callback = function(args)
-            vim.keymap.set({ "n", "v" }, "<C-d>", "<C-d>zz", {
-                silent = true,
-                buffer = args.buf,
-            })
-            vim.keymap.set({ "n", "v" }, "<C-f>", "<C-u>zz", {
-                silent = true,
-                buffer = args.buf,
-            })
-        end,
-    })
 end
 
 return M
