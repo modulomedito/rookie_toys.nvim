@@ -40,22 +40,6 @@ local function decode_himalaya_json(output)
     return decoded
 end
 
-local function format_contact(contact)
-    if type(contact) == "string" and contact ~= "" then return contact end
-    if type(contact) ~= "table" then return "Unknown" end
-
-    local name = contact.name
-    local addr = contact.addr or contact.address or contact.email
-
-    if name and name ~= "" and addr and addr ~= "" then
-        return string.format("%s <%s>", name, addr)
-    end
-    if name and name ~= "" then return name end
-    if addr and addr ~= "" then return addr end
-
-    return "Unknown"
-end
-
 local function format_contact_name(contact)
     if type(contact) == "string" and contact ~= "" then return contact end
     if type(contact) ~= "table" then return "Unknown" end
@@ -381,7 +365,7 @@ end
 function M.open()
     -- Create buffers if they don't exist
     state.folders_buf = create_buffer("HimalayaFolders", "himalaya-folders")
-    state.envelopes_buf = create_buffer("HimalayaEnvelopes", "himalaya-envelopes")
+    state.envelopes_buf = create_buffer("HimalayaEnvelopes", "markdown")
 
     local total_width = math.floor(vim.o.columns * 0.9)
     local total_height = math.floor(vim.o.lines * 0.85)
