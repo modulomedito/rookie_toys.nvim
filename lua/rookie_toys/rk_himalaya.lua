@@ -56,6 +56,126 @@ local function format_contact(contact)
     return "Unknown"
 end
 
+local function format_contact_name(contact)
+    if type(contact) == "string" and contact ~= "" then return contact end
+    if type(contact) ~= "table" then return "Unknown" end
+
+    if contact.name and contact.name ~= "" then return contact.name end
+    if contact.addr and contact.addr ~= "" then return contact.addr end
+    if contact.address and contact.address ~= "" then return contact.address end
+    if contact.email and contact.email ~= "" then return contact.email end
+
+    return "Unknown"
+end
+
+local function truncate_display(text, max_width)
+    text = tostring(text or "")
+    if max_width <= 0 then return "" end
+    if vim.fn.strdisplaywidth(text) <= max_width then return text end
+    if max_width == 1 then return "." end
+
+    local target_width = max_width - 1
+    local result = ""
+    local width = 0
+    local char_count = vim.fn.strchars(text)
+    for index = 0, char_count - 1 do
+        local s = vim.fn.strcharpart(text, index, 1)
+        local char_width = vim.fn.strdisplaywidth(s)
+        if width + char_width > target_width then break end
+        result = result .. s
+        width = width + char_width
+    end
+
+    return result .. "…"
+end
+
+local function pad_display(text, width, align_right)
+    text = truncate_display(text, width)
+    local padding = math.max(0, width - vim.fn.strdisplaywidth(text))
+    if align_right then
+        return string.rep(" ", padding) .. text
+    end
+    return text .. string.rep(" ", padding)
+end
+
+local function format_flags(env)
+    local flags = {}
+    if env.has_attachment then table.insert(flags, "@") end
+
+    local env_flags = env.flags or {}
+    local has = {}
+    for _, flag in ipairs(env_flags) do
+        has[flag] = true
+    end
+
+    if has.Answered then table.insert(flags, "R") end
+    if has.Flagged then table.insert(flags, "!") end
+    if has.Draft then table.insert(flags, "D") end
+    if not has.Seen then table.insert(flags, "N") end
+
+    return table.concat(flags)
+end
+
+local function render_envelope_lines(envelopes, total_width)
+    local id_width = 4
+    local flags_width = 5
+    local date_width = 24
+
+    local from_width = 8
+    for _, env in ipairs(envelopes) do
+        local sender = format_contact_name(env.sender or env.from)
+        from_width = math.max(from_width, vim.fn.strdisplaywidth(sender))
+    end
+    from_width = math.min(from_width, 18)
+
+    local separator_width = 16
+    local min_subject_width = 20
+    local subject_width = total_width - (id_width + flags_width + from_width + date_width + separator_width)
+    if subject_width < min_subject_width then
+        local overflow = min_subject_width - subject_width
+        local shrink_from = math.min(overflow, math.max(0, from_width - 8))
+        from_width = from_width - shrink_from
+        overflow = overflow - shrink_from
+        local shrink_date = math.min(overflow, math.max(0, date_width - 16))
+        date_width = date_width - shrink_date
+        subject_width = total_width - (id_width + flags_width + from_width + date_width + separator_width)
+    end
+    subject_width = math.max(min_subject_width, subject_width)
+
+    local header = string.format(
+        "| %s | %s | %s | %s | %s |",
+        pad_display("ID", id_width, true),
+        pad_display("FLAGS", flags_width, false),
+        pad_display("SUBJECT", subject_width, false),
+        pad_display("FROM", from_width, false),
+        pad_display("DATE", date_width, false)
+    )
+
+    local divider = string.format(
+        "|-%s-|-%s-|-%s-|-%s-|-%s-|",
+        string.rep("-", id_width),
+        string.rep("-", flags_width),
+        string.rep("-", subject_width),
+        string.rep("-", from_width),
+        string.rep("-", date_width)
+    )
+
+    local lines = { header, divider }
+    for _, env in ipairs(envelopes) do
+        local line = string.format(
+            "| %s | %s | %s | %s | %s |",
+            pad_display(env.id or env.number or "?", id_width, true),
+            pad_display(format_flags(env), flags_width, true),
+            pad_display(env.subject or "(No Subject)", subject_width, false),
+            pad_display(format_contact_name(env.sender or env.from), from_width, false),
+            pad_display(env.date or "", date_width, false)
+        )
+        table.insert(lines, line)
+    end
+
+    return lines
+end
+
 -- Utility: Run himalaya CLI and return JSON
 local function run_himalaya(args)
     if vim.fn.executable("himalaya") == 0 then
@@ -188,17 +308,11 @@ function M.fetch_envelopes(folder, page)
     end
 
     state.envelopes = envelopes
-    local lines = {}
-    for _, env in ipairs(envelopes) do
-        -- Format: [ID] Sender | Subject | Date
-        -- Try to handle both v1 and v2 property names
-        local sender = format_contact(env.sender or env.from)
-        local subject = env.subject or "(No Subject)"
-        local date = env.date or ""
-        local id = env.id or env.number or "?"
-        local line = string.format(" %-6s | %-30s | %s | %s", id, sender, subject, date)
-        table.insert(lines, line)
+    local width = 100
+    if state.envelopes_win and vim.api.nvim_win_is_valid(state.envelopes_win) then
+        width = vim.api.nvim_win_get_width(state.envelopes_win)
     end
+    local lines = render_envelope_lines(envelopes, width)
 
     vim.api.nvim_buf_set_option(state.envelopes_buf, "modifiable", true)
     vim.api.nvim_buf_set_lines(state.envelopes_buf, 0, -1, false, lines)
@@ -234,7 +348,7 @@ function M.read_message(id)
 
     -- Ensure message window exists
     if not state.message_win or not vim.api.nvim_win_is_valid(state.message_win) then
-        state.message_buf = create_buffer("HimalayaMessage", "mail")
+        state.message_buf = create_buffer("HimalayaMessage", "markdown")
         state.message_win = create_floating_win(state.message_buf, {
             width = math.floor(vim.o.columns * 0.8),
             height = math.floor(vim.o.lines * 0.8),
