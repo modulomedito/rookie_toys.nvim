@@ -70,9 +70,7 @@ function M.setup()
                         },
                         schema = {
                             model = {
-                                default = function()
-                                    return vim.g.rookie_toys_ai_model or get_default_model("gemini")
-                                end
+                                default = vim.g.rookie_toys_ai_model or get_default_model("gemini")
                             }
                         }
                     })
