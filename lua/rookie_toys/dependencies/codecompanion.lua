@@ -15,6 +15,10 @@ local function get_default_model(adapter)
     return "gemma2:9b"
 end
 
+local function get_ai_api_key(env_name)
+    return vim.g.rookie_toys_ai_api_key or os.getenv(env_name)
+end
+
 function M.setup()
     local has_codecompanion, codecompanion = pcall(require, "codecompanion")
     if not has_codecompanion then
@@ -59,6 +63,11 @@ function M.setup()
                 end,
                 gemini = function()
                     return require("codecompanion.adapters").extend("gemini", {
+                        env = {
+                            api_key = function()
+                                return get_ai_api_key("GEMINI_API_KEY")
+                            end
+                        },
                         schema = {
                             model = {
                                 default = function()
