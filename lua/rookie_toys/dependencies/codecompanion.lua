@@ -1,42 +1,74 @@
 local M = {}
 
+local function get_ai_adapter()
+    local adapter = vim.g.rookie_toys_ai_adapter
+    if adapter == "gemini" then
+        return "gemini"
+    end
+    return "ollama"
+end
+
+local function get_default_model(adapter)
+    if adapter == "gemini" then
+        return "gemini-3.1-pro-preview"
+    end
+    return "gemma2:9b"
+end
+
 function M.setup()
     local has_codecompanion, codecompanion = pcall(require, "codecompanion")
     if not has_codecompanion then
         return
     end
 
+    if vim.g.rookie_toys_ai_adapter == nil then
+        vim.g.rookie_toys_ai_adapter = "ollama"
+    end
+
     if vim.g.rookie_toys_ai_model == nil then
-        vim.g.rookie_toys_ai_model = "gemma2:9b"
+        vim.g.rookie_toys_ai_model = get_default_model(get_ai_adapter())
     end
 
     codecompanion.setup({
         strategies = {
             chat = {
-                adapter = "ollama"
+                adapter = get_ai_adapter()
             },
             inline = {
-                adapter = "ollama"
+                adapter = get_ai_adapter()
             },
             agent = {
-                adapter = "ollama"
+                adapter = get_ai_adapter()
             }
         },
         adapters = {
-            ollama = function()
-                return require("codecompanion.adapters").extend("ollama", {
-                    schema = {
-                        model = {
-                            default = function()
-                                return vim.g.rookie_toys_ai_model
-                            end
-                        },
-                        num_ctx = {
-                            default = 16384
+            http = {
+                ollama = function()
+                    return require("codecompanion.adapters").extend("ollama", {
+                        schema = {
+                            model = {
+                                default = function()
+                                    return vim.g.rookie_toys_ai_model or get_default_model("ollama")
+                                end
+                            },
+                            num_ctx = {
+                                default = 16384
+                            }
                         }
-                    }
-                })
-            end
+                    })
+                end,
+                gemini = function()
+                    return require("codecompanion.adapters").extend("gemini", {
+                        schema = {
+                            model = {
+                                default = function()
+                                    return vim.g.rookie_toys_ai_model or get_default_model("gemini")
+                                end
+                            }
+                        }
+                    })
+                end
+            }
         },
         prompt_library = {
             ["Generate commit messages"] = {
