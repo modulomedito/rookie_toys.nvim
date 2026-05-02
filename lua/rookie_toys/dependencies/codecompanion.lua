@@ -10,7 +10,7 @@ end
 
 local function get_default_model(adapter)
     if adapter == "gemini" then
-        return "gemini-3.1-pro-preview"
+        return "gemini-3-flash-preview"
     end
     return "gemma2:9b"
 end
