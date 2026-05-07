@@ -37,7 +37,6 @@ Use lazy.nvim to install this plugin.
     'stevearc/oil.nvim', -- File explorer
   },
   config = function()
-    vim.g.rookie_toys_ai_model = "gemma2:9b"
     vim.g.rookie_toys_ai_adapter = "gemini"
     vim.g.rookie_toys_ai_model = "gemini-3-flash-preview"
     vim.g.rookie_toys_ai_api_key = "sk-1234567890abcdef1234567890abcdef"
