@@ -72,6 +72,12 @@ function M.setup()
                             model = {
                                 default = vim.g.rookie_toys_ai_model or get_default_model("gemini")
                             }
+                        },
+                        opts = {
+                            -- Increase timeout to 30s to handle slow connections
+                            timeout = vim.g.rookie_toys_ai_timeout or 30000,
+                            -- Support proxy for users in restricted regions
+                            proxy = vim.g.rookie_toys_ai_proxy,
                         }
                     })
                 end
