@@ -40,8 +40,8 @@ Use lazy.nvim to install this plugin.
     vim.g.rookie_toys_ai_adapter = "gemini"
     vim.g.rookie_toys_ai_model = "gemini-3-flash-preview"
     vim.g.rookie_toys_ai_api_key = "sk-1234567890abcdef1234567890abcdef"
-    vim.g.rookie_toys_ai_proxy = "http:127.0.0.1:7890"
-    vim.g.gitlab_url = 'https:///gitlab.com'
+    vim.g.rookie_toys_ai_proxy = "http://127.0.0.1:7890"
+    vim.g.gitlab_url = 'https://gitlab.com'
     vim.g.gitlab_token = 'glpat-11111111111111111111'
     require("rookie_toys").setup()
     -- Other configs
