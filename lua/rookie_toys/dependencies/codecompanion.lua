@@ -47,6 +47,12 @@ function M.setup()
         },
         adapters = {
             http = {
+                opts = {
+                    -- Global timeout for all adapters (30s)
+                    timeout = vim.g.rookie_toys_ai_timeout or 30000,
+                    -- Global proxy support
+                    proxy = vim.g.rookie_toys_ai_proxy,
+                },
                 ollama = function()
                     return require("codecompanion.adapters").extend("ollama", {
                         schema = {
@@ -74,10 +80,8 @@ function M.setup()
                             }
                         },
                         opts = {
-                            -- Increase timeout to 30s to handle slow connections
-                            timeout = vim.g.rookie_toys_ai_timeout or 30000,
-                            -- Support proxy for users in restricted regions
-                            proxy = vim.g.rookie_toys_ai_proxy,
+                            -- Use IPv4 to avoid common Windows connection hangs
+                            extra_args = { "-4" }
                         }
                     })
                 end
