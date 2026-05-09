@@ -36,14 +36,14 @@ function M.setup()
     codecompanion.setup({
         strategies = {
             chat = {
-                adapter = get_ai_adapter()
+                adapter = get_ai_adapter(),
             },
             inline = {
-                adapter = get_ai_adapter()
+                adapter = get_ai_adapter(),
             },
             agent = {
-                adapter = get_ai_adapter()
-            }
+                adapter = get_ai_adapter(),
+            },
         },
         adapters = {
             http = {
@@ -59,12 +59,12 @@ function M.setup()
                             model = {
                                 default = function()
                                     return vim.g.rookie_toys_ai_model or get_default_model("ollama")
-                                end
+                                end,
                             },
                             num_ctx = {
-                                default = 16384
-                            }
-                        }
+                                default = 16384,
+                            },
+                        },
                     })
                 end,
                 gemini = function()
@@ -72,20 +72,20 @@ function M.setup()
                         env = {
                             api_key = function()
                                 return get_ai_api_key("GEMINI_API_KEY")
-                            end
+                            end,
                         },
                         schema = {
                             model = {
-                                default = vim.g.rookie_toys_ai_model or get_default_model("gemini")
-                            }
+                                default = vim.g.rookie_toys_ai_model or get_default_model("gemini"),
+                            },
                         },
                         opts = {
                             -- Use IPv4 to avoid common Windows connection hangs
-                            extra_args = { "-4" }
-                        }
+                            extra_args = { "-4" },
+                        },
                     })
-                end
-            }
+                end,
+            },
         },
         prompt_library = {
             ["Generate commit messages"] = {
@@ -96,11 +96,12 @@ function M.setup()
                     auto_submit = true,
                     placement = "new",
                     is_slash_cmd = true,
-                    stop_context_insertion = true
+                    stop_context_insertion = true,
                 },
-                prompts = {{
-                    role = "system",
-                    content = [[
+                prompts = {
+                    {
+                        role = "system",
+                        content = [[
 请作为一名资深工程师生成 Git 提交信息
 
 格式（空格敏感）：
@@ -139,36 +140,44 @@ function M.setup()
 5. 换行后提供详细的 Body，解释 "为什么改" 而非 "改了什么"
 6. 每次生成时，清除上下文记忆并重新扫描 stage 区的文件变更点
 7. 语言：中文
-]]
-                }, {
-                    role = "user",
-                    content = function()
-                        local diff = vim.fn.system("git diff --cached")
-                        if diff == "" then
-                            return "No staged changes found. Please stage some changes before running this command."
-                        end
-                        return "Here is the diff of the changes:\n\n```diff\n" .. diff .. "\n```"
-                    end,
-                    opts = {
-                        contains_code = true
-                    }
-                }}
-            }
-        }
+]],
+                    },
+                    {
+                        role = "user",
+                        content = function()
+                            local diff = vim.fn.system("git diff --cached")
+                            if diff == "" then
+                                return "No staged changes found. Please stage some changes before running this command."
+                            end
+                            return "Here is the diff of the changes:\n\n```diff\n"
+                                .. diff
+                                .. "\n```"
+                        end,
+                        opts = {
+                            contains_code = true,
+                        },
+                    },
+                },
+            },
+        },
     })
 
     -- Keymaps
-    vim.keymap.set({"n", "v"}, "<leader>ca", "<cmd>CodeCompanionActions<cr>", {
+    vim.keymap.set({ "n", "v" }, "<leader>ca", "<cmd>CodeCompanionActions<cr>", {
         noremap = true,
-        silent = true
+        silent = true,
+    })
+    vim.keymap.set("n", "<leader><leader>cc", "<cmd>CodeCompanionChat<cr>", {
+        noremap = true,
+        silent = true,
     })
     vim.keymap.set("n", "<leader>cc", "<cmd>CodeCompanionChat Toggle<cr>", {
         noremap = true,
-        silent = true
+        silent = true,
     })
     vim.keymap.set("v", "<leader>cc", "<cmd>CodeCompanionChat Add<cr>", {
         noremap = true,
-        silent = true
+        silent = true,
     })
 end
 
