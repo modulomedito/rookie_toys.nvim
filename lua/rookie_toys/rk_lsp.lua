@@ -38,6 +38,14 @@ function M.toggle_highlight_diagnostics()
     print("LSP Highlights & Diagnostics: " .. status)
 end
 
+function M.stop_lsp(lsp_name)
+    local clients = vim.lsp.get_clients({ name = lsp_name })
+    for _, client in ipairs(clients) do
+        client:stop()
+    end
+    print("Stopped " .. lsp_name)
+end
+
 function M.setup()
     -- Global variable to control enabling LSP keymaps
     if vim.g.rookie_toys_lsp_enable == false then
@@ -94,18 +102,8 @@ function M.setup()
         vim.diagnostic.open_float,
         { desc = "LSP: Show diagnostic error" }
     )
-    vim.keymap.set(
-        "n",
-        "[d",
-        vim.diagnostic.goto_prev,
-        { desc = "LSP: Goto previous diagnostic" }
-    )
-    vim.keymap.set(
-        "n",
-        "]d",
-        vim.diagnostic.goto_next,
-        { desc = "LSP: Goto next diagnostic" }
-    )
+    vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "LSP: Goto previous diagnostic" })
+    vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "LSP: Goto next diagnostic" })
     vim.keymap.set(
         "n",
         "<leader>q",
@@ -126,17 +124,11 @@ function M.setup()
                 if not vim.api.nvim_buf_is_valid(ev.buf) then
                     return
                 end
-                if
-                    vim.lsp.semantic_tokens
-                    and vim.lsp.semantic_tokens.enable
-                then
+                if vim.lsp.semantic_tokens and vim.lsp.semantic_tokens.enable then
                     vim.lsp.semantic_tokens.enable(false, { bufnr = ev.buf })
                 else
                     local client = vim.lsp.get_client_by_id(ev.data.client_id)
-                    if
-                        client
-                        and client.server_capabilities.semanticTokensProvider
-                    then
+                    if client and client.server_capabilities.semanticTokensProvider then
                         vim.lsp.semantic_tokens.stop(ev.buf, client.id)
                     end
                 end
@@ -236,6 +228,22 @@ function M.setup()
     vim.keymap.set("n", "<leader>hld", M.toggle_highlight_diagnostics, {
         desc = "Toggle [h]igh[l]ighting semantic & [d]iagnostics",
         silent = true,
+    })
+
+    -- Stop specific lsp
+    vim.api.nvim_create_user_command("RkLspStop", function(opts)
+        M.stop_lsp(opts.args)
+    end, {
+        nargs = 1,
+        complete = function()
+            local clients = vim.lsp.get_clients()
+            local names = {}
+            for _, client in ipairs(clients) do
+                table.insert(names, client.name)
+            end
+            return names
+        end,
+        desc = "Stop a specific LSP client",
     })
 end
 
