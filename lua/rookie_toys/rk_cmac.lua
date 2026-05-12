@@ -39,13 +39,16 @@ local function get_visual_selection()
 end
 
 local function clean_hex(text)
-    return string.gsub(text, "[^0-9A-Fa-f]", "")
+    local no_prefix = string.gsub(text, "0[xX]", "")
+    return string.gsub(no_prefix, "[^0-9A-Fa-f]", "")
 end
 
 local function hex_to_bin(hex)
-    return (string.gsub(hex, "..", function(cc)
-        return string.char(tonumber(cc, 16))
-    end))
+    return (
+        string.gsub(hex, "..", function(cc)
+            return string.char(tonumber(cc, 16))
+        end)
+    )
 end
 
 function M.set_cmac_key(opts)
@@ -64,7 +67,7 @@ function M.set_cmac_key(opts)
     end
 
     cmac_key = hex
-    vim.api.nvim_echo({{"CMAC key set to: " .. cmac_key, "Normal"}}, true, {})
+    vim.api.nvim_echo({ { "CMAC key set to: " .. cmac_key, "Normal" } }, true, {})
 end
 
 function M.calc_cmac(opts)
@@ -105,7 +108,12 @@ function M.calc_cmac(opts)
     end
 
     -- Run openssl command
-    local cmd = string.format('openssl dgst -mac cmac -macopt cipher:%s -macopt hexkey:%s "%s"', cipher, cmac_key, tmp_file)
+    local cmd = string.format(
+        'openssl dgst -mac cmac -macopt cipher:%s -macopt hexkey:%s "%s"',
+        cipher,
+        cmac_key,
+        tmp_file
+    )
     local handle = io.popen(cmd)
     if not handle then
         os.remove(tmp_file)
@@ -127,9 +135,15 @@ function M.calc_cmac(opts)
     if mac then
         mac = string.upper(mac)
         vim.fn.setreg("+", mac)
-        vim.api.nvim_echo({{"CMAC calculated and copied to clipboard: " .. mac, "Normal"}}, true, {})
+        vim.api.nvim_echo(
+            { { "CMAC calculated and copied to clipboard: " .. mac, "Normal" } },
+            true,
+            {}
+        )
     else
-        vim.api.nvim_err_writeln("Failed to parse CMAC from openssl output: " .. (result or "no output"))
+        vim.api.nvim_err_writeln(
+            "Failed to parse CMAC from openssl output: " .. (result or "no output")
+        )
     end
 end
 
