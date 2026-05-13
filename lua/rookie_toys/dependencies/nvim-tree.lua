@@ -3,16 +3,49 @@ local last_op = "copy"
 
 local function copy_node_path()
     local api = require("nvim-tree.api")
-    local node = api.tree.get_node_under_cursor()
-    if not node then
-        print("No node selected")
-        return
+    local nodes = api.marks.list()
+
+    if #nodes == 0 then
+        local mode = vim.fn.mode()
+        if mode == "v" or mode == "V" or mode == "\22" then
+            local sline = vim.fn.line("v")
+            local eline = vim.fn.line(".")
+            if sline > eline then
+                sline, eline = eline, sline
+            end
+
+            local curr_cursor = vim.api.nvim_win_get_cursor(0)
+            for i = sline, eline do
+                vim.api.nvim_win_set_cursor(0, { i, 0 })
+                local node = api.tree.get_node_under_cursor()
+                if node and node.name ~= ".." then
+                    table.insert(nodes, node)
+                end
+            end
+            vim.api.nvim_win_set_cursor(0, curr_cursor)
+        else
+            local node = api.tree.get_node_under_cursor()
+            if node then
+                table.insert(nodes, node)
+            end
+        end
     end
-    local path = node.absolute_path
-    vim.fn.setreg("+", path)
-    vim.fn.setreg("*", path)
-    last_op = "copy"
-    print("Marked for copy to clipboard: " .. path)
+
+    local paths = {}
+    for _, node in ipairs(nodes) do
+        if node.absolute_path then
+            table.insert(paths, node.absolute_path)
+        end
+    end
+
+    if #paths > 0 then
+        vim.fn.setreg("+", table.concat(paths, "\n"))
+        vim.notify("Copied " .. #paths .. " path(s) to system clipboard")
+        -- Clear marks after copying to match expected "copy" behavior
+        api.marks.clear()
+    end
+
+    vim.cmd("normal! \27")
 end
 
 local function cut_node()
@@ -68,8 +101,7 @@ local function copy_node_content()
         ps_path
     )
 
-    local output =
-        vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
+    local output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     if vim.v.shell_error == 0 then
         print("Copied file to system clipboard (Explorer compatible): " .. path)
     else
@@ -99,12 +131,9 @@ local function cut_node_content()
         ps_path
     )
 
-    local output =
-        vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
+    local output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     if vim.v.shell_error == 0 then
-        print(
-            "Marked for cut in system clipboard (Explorer compatible): " .. path
-        )
+        print("Marked for cut in system clipboard (Explorer compatible): " .. path)
     else
         print("Failed to cut file to clipboard: " .. output)
     end
@@ -120,13 +149,9 @@ local function build_copy_target_path(sourcePath, destDir)
     while true do
         local targetName
         if vim.fn.isdirectory(sourcePath) == 1 then
-            targetName = sourceName
-                .. suffix
-                .. (index > 1 and (" " .. index) or "")
+            targetName = sourceName .. suffix .. (index > 1 and (" " .. index) or "")
         elseif sourceExt == "" or sourceRoot == sourceName then
-            targetName = sourceName
-                .. suffix
-                .. (index > 1 and (" " .. index) or "")
+            targetName = sourceName .. suffix .. (index > 1 and (" " .. index) or "")
         else
             targetName = sourceRoot
                 .. suffix
@@ -145,26 +170,17 @@ end
 
 local function paste_node()
     local api = require("nvim-tree.api")
-    local sourcePath = vim.fn.getreg("+")
-    if sourcePath == "" then
-        sourcePath = vim.fn.getreg("*")
+    local clipboard = vim.fn.getreg("+")
+    if clipboard == "" then
+        clipboard = vim.fn.getreg("*")
     end
 
-    if sourcePath == "" then
+    if clipboard == "" then
         print("Clipboard is empty.")
         return
     end
 
-    sourcePath = sourcePath:gsub("^%s*(.-)%s*$", "%1")
-
-    if
-        vim.fn.filereadable(sourcePath) == 0
-        and vim.fn.isdirectory(sourcePath) == 0
-    then
-        print("Clipboard content is not a valid path: " .. sourcePath)
-        return
-    end
-
+    local paths = vim.split(clipboard, "[\r\n]+", { trimempty = true })
     local node = api.tree.get_node_under_cursor()
     if not node then
         print("No destination node selected")
@@ -176,73 +192,72 @@ local function paste_node()
         destDir = vim.fn.fnamemodify(destDir, ":h")
     end
 
-    local sourceName = vim.fn.fnamemodify(sourcePath, ":t")
-    local targetPath = destDir .. "/" .. sourceName
+    local success_count = 0
+    for _, sourcePath in ipairs(paths) do
+        sourcePath = sourcePath:gsub("^%s*(.-)%s*$", "%1")
 
-    if targetPath == sourcePath then
-        if last_op == "cut" then
-            print("Source and destination are the same, no-op.")
-            return
+        if vim.fn.filereadable(sourcePath) == 1 or vim.fn.isdirectory(sourcePath) == 1 then
+            local sourceName = vim.fn.fnamemodify(sourcePath, ":t")
+            local targetPath = destDir .. "/" .. sourceName
+
+            if targetPath == sourcePath then
+                if last_op ~= "cut" then
+                    targetPath = build_copy_target_path(sourcePath, destDir)
+                end
+            end
+
+            if targetPath ~= sourcePath and vim.fn.glob(targetPath) ~= "" then
+                print("Target already exists, skipping: " .. targetPath)
+            else
+                local output
+                if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
+                    local script
+                    if last_op == "cut" then
+                        script = string.format(
+                            "Move-Item -Path '%s' -Destination '%s' -Force",
+                            sourcePath:gsub("'", "''"),
+                            targetPath:gsub("'", "''")
+                        )
+                    else
+                        script = string.format(
+                            "Copy-Item -Path '%s' -Destination '%s' -Recurse -Force",
+                            sourcePath:gsub("'", "''"),
+                            targetPath:gsub("'", "''")
+                        )
+                    end
+                    output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
+                else
+                    local cmd = last_op == "cut"
+                            and string.format(
+                                'mv "%s" "%s"',
+                                sourcePath:gsub('"', '\\"'),
+                                targetPath:gsub('"', '\\"')
+                            )
+                        or string.format(
+                            'cp -r "%s" "%s"',
+                            sourcePath:gsub('"', '\\"'),
+                            targetPath:gsub('"', '\\"')
+                        )
+                    output = vim.fn.system(cmd)
+                end
+
+                if vim.v.shell_error == 0 then
+                    success_count = success_count + 1
+                else
+                    print("Error processing " .. sourcePath .. ": " .. output)
+                end
+            end
+        else
+            print("Invalid path skipped: " .. sourcePath)
         end
-        targetPath = build_copy_target_path(sourcePath, destDir)
     end
 
-    if vim.fn.glob(targetPath) ~= "" then
-        print("Target already exists: " .. targetPath)
-        return
-    end
-
-    local output
-    if vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1 then
-        local script
+    if success_count > 0 then
+        print((last_op == "cut" and "Moved " or "Copied ") .. success_count .. " item(s).")
         if last_op == "cut" then
-            script = string.format(
-                "Move-Item -Path '%s' -Destination '%s' -Force",
-                sourcePath:gsub("'", "''"),
-                targetPath:gsub("'", "''")
-            )
-        else
-            script = string.format(
-                "Copy-Item -Path '%s' -Destination '%s' -Recurse",
-                sourcePath:gsub("'", "''"),
-                targetPath:gsub("'", "''")
-            )
-        end
-        output =
-            vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
-    else
-        local cmd
-        if last_op == "cut" then
-            cmd = string.format(
-                'mv "%s" "%s"',
-                sourcePath:gsub('"', '\\"'),
-                targetPath:gsub('"', '\\"')
-            )
-        else
-            cmd = string.format(
-                'cp -r "%s" "%s"',
-                sourcePath:gsub('"', '\\"'),
-                targetPath:gsub('"', '\\"')
-            )
-        end
-        output = vim.fn.system(cmd)
-    end
-
-    if vim.v.shell_error == 0 then
-        if last_op == "cut" then
-            print("Moved to " .. targetPath)
-            last_op = "copy" -- Reset to copy after move
-        else
-            print("Copied to " .. targetPath)
+            last_op = "copy"
         end
         api.tree.reload()
-    else
-        print(
-            "Could not "
-                .. (last_op == "cut" and "move" or "copy")
-                .. " node: "
-                .. output
-        )
     end
 end
 
@@ -270,8 +285,7 @@ local function paste_system_clipboard_content()
             timestamp,
             timestamp
         )
-        output =
-            vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
+        output = vim.fn.system({ "powershell", "-NoProfile", "-Command", script })
     elseif vim.fn.has("mac") == 1 or vim.fn.has("macunix") == 1 then
         local destDir_sh = vim.fn.escape(destDir, "'")
         local cmd = string.format(
@@ -314,10 +328,7 @@ local function remove_buffers_not_under_root()
         if vim.bo[buf.bufnr].filetype ~= "NvimTree" then
             listed_buffers = listed_buffers + 1
             local buf_name = vim.fn.fnamemodify(buf.name, ":p"):gsub("\\", "/")
-            if
-                buf.name ~= ""
-                and string.find(buf_name, root_path, 1, true) ~= 1
-            then
+            if buf.name ~= "" and string.find(buf_name, root_path, 1, true) ~= 1 then
                 table.insert(buffers_to_delete, buf.bufnr)
             end
         end
@@ -331,9 +342,7 @@ local function remove_buffers_not_under_root()
         else
             local found_normal_win = false
             for _, win in ipairs(vim.fn.getwininfo()) do
-                if
-                    vim.bo[vim.fn.winbufnr(win.winid)].filetype ~= "NvimTree"
-                then
+                if vim.bo[vim.fn.winbufnr(win.winid)].filetype ~= "NvimTree" then
                     vim.fn.win_execute(win.winid, "enew")
                     found_normal_win = true
                     break
@@ -350,9 +359,7 @@ local function remove_buffers_not_under_root()
     for _, bufnr in ipairs(buffers_to_delete) do
         for _, win in ipairs(vim.fn.getwininfo()) do
             if win.bufnr == bufnr then
-                if
-                    vim.bo[vim.fn.winbufnr(win.winid)].filetype ~= "NvimTree"
-                then
+                if vim.bo[vim.fn.winbufnr(win.winid)].filetype ~= "NvimTree" then
                     vim.fn.win_execute(win.winid, "enew")
                 end
             end
@@ -392,32 +399,13 @@ local function my_on_attach(bufnr)
     end, opts("Change CWD and nvim-tree root to node"))
 
     vim.keymap.set("n", "L", "$", opts("Move to line end"))
-    vim.keymap.set("n", "<leader>mc", copy_node_path, opts("Copy node path"))
+    vim.keymap.set("n", "<leader>mc", copy_node_path, opts("Copy node path to clipboard"))
+    vim.keymap.set("v", "<leader>mc", copy_node_path, opts("Copy selected paths to clipboard"))
     vim.keymap.set("n", "<leader>mx", cut_node, opts("Cut node"))
-    vim.keymap.set(
-        "n",
-        "<leader>mv",
-        paste_node,
-        opts("Rookie nvim-tree: Paste node")
-    )
-    vim.keymap.set(
-        "n",
-        "<leader>mR",
-        run_executable_detached,
-        opts("Run executable detached")
-    )
-    vim.keymap.set(
-        "n",
-        "<leader>mC",
-        copy_node_content,
-        opts("Copy node content to clipboard")
-    )
-    vim.keymap.set(
-        "n",
-        "<leader>mX",
-        cut_node_content,
-        opts("Cut node content to clipboard")
-    )
+    vim.keymap.set("n", "<leader>mv", paste_node, opts("Rookie nvim-tree: Paste node"))
+    vim.keymap.set("n", "<leader>mR", run_executable_detached, opts("Run executable detached"))
+    vim.keymap.set("n", "<leader>mC", copy_node_content, opts("Copy node content to clipboard"))
+    vim.keymap.set("n", "<leader>mX", cut_node_content, opts("Cut node content to clipboard"))
     vim.keymap.set(
         "n",
         "<leader>mP",
@@ -431,12 +419,7 @@ function M.setup()
     vim.keymap.set("n", "<C-e>", ":NvimTreeFocus<CR>", { silent = true })
     vim.keymap.set("n", "<C-S-e>", ":NvimTreeFocus<CR>", { silent = true })
     vim.keymap.set("n", "<C-y>", ":NvimTreeToggle<CR>", { silent = true })
-    vim.keymap.set(
-        "n",
-        "<leader>find",
-        ":NvimTreeFindFile<CR>",
-        { silent = true }
-    )
+    vim.keymap.set("n", "<leader>find", ":NvimTreeFindFile<CR>", { silent = true })
 
     -- Command for RemoveBuffersNotUnderRoot
     vim.api.nvim_create_user_command(
