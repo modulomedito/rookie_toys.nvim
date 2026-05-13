@@ -37,57 +37,132 @@ function M.setup()
         strategies = {
             chat = {
                 adapter = get_ai_adapter(),
+                roles = {
+                    llm = "CodeCompanion",
+                    user = "Me",
+                },
+                keymaps = {
+                    send = {
+                        modes = { n = "<CR>", i = "<C-CR>" },
+                    },
+                    close = {
+                        modes = { n = "q", i = "<C-c>" },
+                    },
+                },
             },
             inline = {
                 adapter = get_ai_adapter(),
+                keymaps = {
+                    accept = {
+                        modes = { n = "ga" },
+                        index = 1,
+                        callback = "keymaps.accept",
+                        description = "Accept the change",
+                    },
+                    reject = {
+                        modes = { n = "gr" },
+                        index = 2,
+                        callback = "keymaps.reject",
+                        description = "Reject the change",
+                    },
+                },
             },
             agent = {
                 adapter = get_ai_adapter(),
+                tools = {
+                    ["files"] = {
+                        callback = "strategies.chat.tools.files",
+                        description = "The agent can read and write files",
+                    },
+                    ["editor"] = {
+                        callback = "strategies.chat.tools.editor",
+                        description = "The agent can edit the current buffer",
+                    },
+                    ["cmd"] = {
+                        callback = "strategies.chat.tools.cmd",
+                        description = "The agent can run shell commands",
+                    },
+                },
             },
         },
         adapters = {
-            http = {
-                opts = {
-                    -- Global timeout for all adapters (30s)
-                    timeout = vim.g.rookie_toys_ai_timeout or 30000,
-                    -- Global proxy support
-                    proxy = vim.g.rookie_toys_ai_proxy,
-                },
-                ollama = function()
-                    return require("codecompanion.adapters").extend("ollama", {
-                        schema = {
-                            model = {
-                                default = function()
-                                    return vim.g.rookie_toys_ai_model or get_default_model("ollama")
-                                end,
-                            },
-                            num_ctx = {
-                                default = 16384,
-                            },
-                        },
-                    })
-                end,
-                gemini = function()
-                    return require("codecompanion.adapters").extend("gemini", {
-                        env = {
-                            api_key = function()
-                                return get_ai_api_key("GEMINI_API_KEY")
+            ollama = function()
+                return require("codecompanion.adapters").extend("ollama", {
+                    env = {
+                        url = vim.g.rookie_toys_ai_ollama_url or "http://localhost:11434",
+                    },
+                    schema = {
+                        model = {
+                            default = function()
+                                return vim.g.rookie_toys_ai_model or get_default_model("ollama")
                             end,
                         },
-                        schema = {
-                            model = {
-                                default = vim.g.rookie_toys_ai_model or get_default_model("gemini"),
-                            },
+                        num_ctx = {
+                            default = 16384,
                         },
-                        opts = {
-                            -- Use IPv4 to avoid common Windows connection hangs
-                            extra_args = { "-4" },
+                    },
+                    opts = {
+                        timeout = vim.g.rookie_toys_ai_timeout or 30000,
+                        proxy = vim.g.rookie_toys_ai_proxy,
+                    },
+                })
+            end,
+            gemini = function()
+                return require("codecompanion.adapters").extend("gemini", {
+                    env = {
+                        api_key = function()
+                            return get_ai_api_key("GEMINI_API_KEY")
+                        end,
+                    },
+                    schema = {
+                        model = {
+                            default = vim.g.rookie_toys_ai_model or get_default_model("gemini"),
                         },
-                    })
-                end,
+                    },
+                    opts = {
+                        -- Use IPv4 to avoid common Windows connection hangs
+                        extra_args = { "-4" },
+                        timeout = vim.g.rookie_toys_ai_timeout or 30000,
+                        proxy = vim.g.rookie_toys_ai_proxy,
+                    },
+                })
+            end,
+        },
+        display = {
+            chat = {
+                show_settings = true,
+                show_token_count = true,
+                window = {
+                    layout = "vertical",
+                    width = 0.4,
+                },
             },
         },
+        opts = {
+            log_level = "DEBUG",
+        },
         prompt_library = {
+            ["Expert Coder"] = {
+                strategy = "chat",
+                description = "Expert coder that can modify files and run commands",
+                opts = {
+                    index = 1,
+                    is_default = true,
+                    is_slash_cmd = true,
+                    short_name = "coder",
+                    auto_submit = true,
+                },
+                prompts = {
+                    {
+                        role = "system",
+                        content = [[You are an expert software engineer with the ability to modify files and run commands.
+Use the provided tools to help the user with their requests.
+When asked to modify code, prefer using the `files` or `editor` tools to make changes directly.
+If you need to understand the project structure, use `cmd` to list files.
+Be concise and efficient.]],
+                    },
+                },
+            },
             ["Generate commit messages"] = {
                 strategy = "chat",
                 description = "Generate a git commit message",
@@ -176,6 +251,10 @@ function M.setup()
         silent = true,
     })
     vim.keymap.set("v", "<leader>cc", "<cmd>CodeCompanionChat Add<cr>", {
+        noremap = true,
+        silent = true,
+    })
+    vim.keymap.set({ "n", "v" }, "<leader>ci", "<cmd>CodeCompanion<cr>", {
         noremap = true,
         silent = true,
     })
