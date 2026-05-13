@@ -14,8 +14,7 @@ function M.setup()
 
     -- Edit this plugin quickly
     vim.keymap.set("n", "<leader>vimrk", function()
-        local path = vim.fn.stdpath("data")
-            .. "/lazy/rookie_toys.nvim/plugin/rookie_toys.lua"
+        local path = vim.fn.stdpath("data") .. "/lazy/rookie_toys.nvim/plugin/rookie_toys.lua"
         vim.cmd("vs " .. path)
     end, {
         desc = "Open rookie_toys.lua",
@@ -35,11 +34,7 @@ function M.setup()
         vim.keymap.set("n", "*", "*zz") -- macos refine
     end
     -- vim.keymap.set("n", "<C-p>", ":find *")
-    vim.keymap.set(
-        "n",
-        "<F2>",
-        ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>"
-    )
+    vim.keymap.set("n", "<F2>", ":%s/\\C\\<<C-r><C-w>\\>/<C-r><C-w>/g<Left><Left>")
     vim.keymap.set("n", "<M-Down>", ":m .+1<CR>==")
     vim.keymap.set("n", "<M-Up>", ":m .-2<CR>==")
     vim.keymap.set("n", "<M-j>", ":m .+1<CR>==", { silent = true })
@@ -123,7 +118,7 @@ function M.setup()
     -- vim.keymap.set({ "n", "v", "o" }, "<leader>P", '"0P')
     -- vim.keymap.set({ "n", "v", "o" }, "<leader>p", '"0p')
     vim.keymap.set({ "n", "v", "o" }, "H", "g^")
-    vim.keymap.set({ "n", "v", "o" }, "L", "g_")
+    vim.keymap.set({ "n", "v", "o" }, "L", "g$")
 
     -- Visual mode
     vim.keymap.set("v", "/", '"-y/<C-r>-<CR>N')
