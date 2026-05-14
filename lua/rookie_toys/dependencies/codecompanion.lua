@@ -15,8 +15,8 @@ local function get_default_model(adapter)
     return "gemma2:9b"
 end
 
-local function get_ai_api_key(env_name)
-    return vim.g.rookie_toys_ai_api_key or os.getenv(env_name)
+local function get_config_value(var_name, env_name)
+    return vim.g[var_name] or os.getenv(env_name)
 end
 
 function M.setup()
@@ -37,12 +37,61 @@ function M.setup()
         strategies = {
             chat = {
                 adapter = get_ai_adapter(),
+                slash_commands = {
+                    ["fetch"] = {
+                        callback = "codecompanion.sources.slash_commands.fetch",
+                        description = "Fetch web content",
+                        opts = {
+                            adapter = get_ai_adapter(),
+                        },
+                    },
+                },
+                tools = {
+                    ["files"] = {
+                        description = "Update the codebase",
+                    },
+                    ["editor"] = {
+                        description = "Update the editor",
+                    },
+                    ["web_search"] = {
+                        description = "Search the internet",
+                    },
+                    ["cmd_runner"] = {
+                        description = "Run terminal commands",
+                    },
+                },
+                groups = {
+                    ["expert"] = {
+                        description = "An expert developer who can modify code and search the web",
+                        system_prompt = "You are an expert developer with access to tools that allow you to modify the codebase and search the internet. Use these tools to help the user with their requests.",
+                        tools = {
+                            "files",
+                            "editor",
+                            "web_search",
+                            "cmd_runner",
+                        },
+                    },
+                },
             },
             inline = {
                 adapter = get_ai_adapter(),
             },
             agent = {
                 adapter = get_ai_adapter(),
+                tools = {
+                    ["files"] = {
+                        description = "Update the codebase",
+                    },
+                    ["editor"] = {
+                        description = "Update the editor",
+                    },
+                    ["web_search"] = {
+                        description = "Search the internet",
+                    },
+                    ["cmd_runner"] = {
+                        description = "Run terminal commands",
+                    },
+                },
             },
         },
         adapters = {
@@ -71,7 +120,7 @@ function M.setup()
                     return require("codecompanion.adapters").extend("gemini", {
                         env = {
                             api_key = function()
-                                return get_ai_api_key("GEMINI_API_KEY")
+                                return get_config_value("rookie_toys_ai_api_key", "GEMINI_API_KEY")
                             end,
                         },
                         schema = {
@@ -82,6 +131,15 @@ function M.setup()
                         opts = {
                             -- Use IPv4 to avoid common Windows connection hangs
                             extra_args = { "-4" },
+                        },
+                    })
+                end,
+                tavily = function()
+                    return require("codecompanion.adapters").extend("tavily", {
+                        env = {
+                            api_key = function()
+                                return get_config_value("rookie_toys_ai_websearch_api", "TAVILY_API_KEY")
+                            end,
                         },
                     })
                 end,
@@ -164,6 +222,10 @@ function M.setup()
 
     -- Keymaps
     vim.keymap.set({ "n", "v" }, "<leader>ca", "<cmd>CodeCompanionActions<cr>", {
+        noremap = true,
+        silent = true,
+    })
+    vim.keymap.set("n", "<leader>ci", "<cmd>CodeCompanion<cr>", {
         noremap = true,
         silent = true,
     })
