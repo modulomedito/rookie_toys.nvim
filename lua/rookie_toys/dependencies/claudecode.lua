@@ -1,7 +1,7 @@
 local M = {}
 
 function M.setup()
-    local has_claudecode, claudecode = pcall(require, "claudecode")
+    local has_claudecode, claudecode = pcall(require, "claude-code")
     if not has_claudecode then
         return
     end
