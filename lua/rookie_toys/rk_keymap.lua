@@ -150,6 +150,11 @@ function M.setup()
     end, {
         silent = true,
     })
+
+    -- Terminal mode
+    vim.keymap.set("t", "kj", [[<C-\><C-n>]], {
+        desc = "Exit terminal mode",
+    })
 end
 
 return M
