@@ -22,10 +22,16 @@ Use lazy.nvim to install this plugin.
     'nvim-mini/mini.nvim', -- Collection of various small
     'nvim-tree/nvim-tree.lua', -- File explorer
     'sindrets/diffview.nvim', -- Git diff view
+    'folke/flash.nvim', -- Search and navigation
+    'stevearc/conform.nvim', -- Formatter
+    'L3MON4D3/LuaSnip', -- Snippet engine
+    'nvim-telescope/telescope.nvim', -- Fuzzy finder
     't9md/vim-textmanip', -- Text movement
     -- 'vim-scripts/DrawIt', -- Draw ASCII art
     'tpope/vim-fugitive', -- Git wrapper
     'olimorris/codecompanion.nvim', -- AI coding assistant
+    'coder/claudecode.nvim', -- Claude Code integration
+    'folke/snacks.nvim', -- Useful Neovim utilities (for Claude Code)
     'nvim-lua/plenary.nvim', -- Lua utility functions
     'nvim-treesitter/nvim-treesitter', -- Better syntax parsing/highlighting
     'MeanderingProgrammer/render-markdown.nvim', -- Render markdown in buffers

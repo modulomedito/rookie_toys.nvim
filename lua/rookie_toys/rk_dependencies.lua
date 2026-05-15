@@ -15,6 +15,7 @@ function M.setup()
     require("rookie_toys.dependencies.smear-cursor").setup()
     require("rookie_toys.dependencies.oil").setup()
     require("rookie_toys.dependencies.diffview").setup()
+    require("rookie_toys.dependencies.claudecode").setup()
 end
 
 return M
