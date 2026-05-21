@@ -118,7 +118,8 @@ function M.setup()
     -- vim.keymap.set({ "n", "v", "o" }, "<leader>P", '"0P')
     -- vim.keymap.set({ "n", "v", "o" }, "<leader>p", '"0p')
     vim.keymap.set({ "n", "v", "o" }, "H", "g^")
-    vim.keymap.set({ "n", "v", "o" }, "L", "g$")
+    -- vim.keymap.set({ "n", "v", "o" }, "L", "g$")
+    vim.keymap.set({ "n", "v", "o" }, "L", "g_")
 
     -- Visual mode
     vim.keymap.set("v", "/", '"-y/<C-r>-<CR>N')
