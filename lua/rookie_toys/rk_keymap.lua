@@ -136,6 +136,9 @@ function M.setup()
     })
     vim.keymap.set("v", "y", "ygv<Esc>")
 
+    -- Insert mode
+    vim.keymap.set("i", "kj", "<Esc>")
+
     -- Select mode
     vim.keymap.set("x", "p", "P")
 
