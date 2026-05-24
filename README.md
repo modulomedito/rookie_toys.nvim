@@ -41,17 +41,35 @@ Use lazy.nvim to install this plugin.
     'tpope/vim-surround', -- Edit surrounding characters
     'sphamba/smear-cursor.nvim', -- Cursor trail animation
     'stevearc/oil.nvim', -- File explorer
+    'NMAC427/guess-indent.nvim', -- Auto indent
+    'nvim-tree/nvim-web-devicons', -- Icons
+    'folke/which-key.nvim', -- Key bindings popup
+    'folke/tokyonight.nvim', -- Colorscheme
+    'folke/todo-comments.nvim', -- Highlight todo comments
+    'nvim-telescope/telescope-ui-select.nvim', -- Telescope UI select
+    'nvim-telescope/telescope-fzf-native.nvim', -- Telescope FZF
+    'j-hui/fidget.nvim', -- LSP status updates
+    'mason-org/mason.nvim', -- Portable package manager
+    'mason-org/mason-lspconfig.nvim', -- Mason LSP config
+    'WhoIsSethDaniel/mason-tool-installer.nvim', -- Mason tool installer
+    'saghen/blink.cmp', -- Autocompletion
   },
   config = function()
-    vim.g.rookie_toys_ai_adapter = "gemini"
-    vim.g.rookie_toys_ai_model = "gemini-3-flash-preview"
-    vim.g.rookie_toys_ai_api_key = "sk-llm-key"
-    vim.g.rookie_toys_ai_websearch_api = "tvly-search-key"
-    vim.g.rookie_toys_ai_proxy = "http://127.0.0.1:7890"
-    vim.g.gitlab_url = 'https://gitlab.com'
-    vim.g.gitlab_token = 'glpat-11111111111111111111'
     require("rookie_toys").setup()
-    -- Other configs
   end,
 },
+```
+
+## In lua/secret.lua
+
+Add your secret configs here.
+
+```lua
+vim.g.rookie_toys_ai_adapter = "gemini"
+vim.g.rookie_toys_ai_model = "gemini-3-flash-preview"
+vim.g.rookie_toys_ai_api_key = "sk-llm-key"
+vim.g.rookie_toys_ai_websearch_api = "tvly-search-key"
+vim.g.rookie_toys_ai_proxy = "http://127.0.0.1:7890"
+vim.g.gitlab_url = 'https://gitlab.com'
+vim.g.gitlab_token = 'glpat-11111111111111111111'
 ```

@@ -1,6 +1,12 @@
 local M = {}
 
 function M.setup()
+    local secret_path = vim.fn.stdpath("config") .. "/lua/secret.lua"
+    if vim.fn.filereadable(secret_path) == 0 then
+        vim.fn.writefile({"-- Your secret configurations here"}, secret_path)
+    end
+    require("secret")
+
     -- Setup default config flags
     require("rookie_toys.rk_default")
 

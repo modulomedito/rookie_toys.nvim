@@ -99,6 +99,15 @@ function M.setup()
         end,
     })
 
+    -- Highlight when yanking (copying) text
+    vim.api.nvim_create_autocmd("TextYankPost", {
+        desc = "Highlight when yanking (copying) text",
+        group = vim.api.nvim_create_augroup("kickstart-highlight-yank", { clear = true }),
+        callback = function()
+            vim.hl.on_yank()
+        end,
+    })
+
     local group_help = vim.api.nvim_create_augroup("RkHelp", { clear = true })
     vim.api.nvim_create_autocmd("FileType", {
         group = group_help,

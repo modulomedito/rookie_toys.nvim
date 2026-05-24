@@ -16,6 +16,16 @@ function M.setup()
     require("rookie_toys.dependencies.oil").setup()
     require("rookie_toys.dependencies.diffview").setup()
     require("rookie_toys.dependencies.claudecode").setup()
+
+    -- New kickstart dependencies
+    require("rookie_toys.dependencies.guessindent").setup()
+    require("rookie_toys.dependencies.whichkey").setup()
+    require("rookie_toys.dependencies.tokyonight").setup()
+    require("rookie_toys.dependencies.todocomments").setup()
+    require("rookie_toys.dependencies.fidget").setup()
+    require("rookie_toys.dependencies.lspconfig").setup()
+    require("rookie_toys.dependencies.blinkcmp").setup()
+    require("rookie_toys.dependencies.treesitter").setup()
 end
 
 return M

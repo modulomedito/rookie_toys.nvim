@@ -95,6 +95,25 @@ function M.setup()
         end
     end
 
+    -- Diagnostic config
+    vim.diagnostic.config({
+        update_in_insert = false,
+        severity_sort = true,
+        float = { border = "rounded", source = "if_many" },
+        underline = { severity = { min = vim.diagnostic.severity.WARN } },
+        virtual_text = true,
+        virtual_lines = false,
+        jump = {
+            on_jump = function(_, bufnr)
+                vim.diagnostic.open_float({
+                    bufnr = bufnr,
+                    scope = "cursor",
+                    focus = false,
+                })
+            end,
+        },
+    })
+
     -- Global mappings
     vim.keymap.set(
         "n",
@@ -221,6 +240,34 @@ function M.setup()
                 desc = "Format buffer (conform)",
                 buffer = ev.buf,
             })
+
+            local client = vim.lsp.get_client_by_id(ev.data.client_id)
+            if client and client:supports_method("textDocument/documentHighlight", ev.buf) then
+                local highlight_augroup = vim.api.nvim_create_augroup("kickstart-lsp-highlight", { clear = false })
+                vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+                    buffer = ev.buf,
+                    group = highlight_augroup,
+                    callback = vim.lsp.buf.document_highlight,
+                })
+                vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+                    buffer = ev.buf,
+                    group = highlight_augroup,
+                    callback = vim.lsp.buf.clear_references,
+                })
+                vim.api.nvim_create_autocmd("LspDetach", {
+                    group = vim.api.nvim_create_augroup("kickstart-lsp-detach", { clear = true }),
+                    callback = function(event2)
+                        vim.lsp.buf.clear_references()
+                        vim.api.nvim_clear_autocmds({ group = "kickstart-lsp-highlight", buffer = event2.buf })
+                    end,
+                })
+            end
+
+            if client and client:supports_method("textDocument/inlayHint", ev.buf) then
+                vim.keymap.set("n", "<leader>th", function()
+                    vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = ev.buf }))
+                end, { desc = "[T]oggle Inlay [H]ints", buffer = ev.buf })
+            end
         end,
     })
 
