@@ -7,7 +7,25 @@ Small, miscellaneous tools for neovim written in lua
 Use lazy.nvim to install this plugin.
 
 ```lua
-{
+-- Install the lazy.nvim plugin manager
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+    local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+    local out = vim.fn.system({
+        "git",
+        "clone",
+        "--filter=blob:none",
+        "--branch=stable",
+        lazyrepo,
+        lazypath,
+    })
+    if vim.v.shell_error ~= 0 then
+        error("Error cloning lazy.nvim:\n" .. out)
+    end
+end
+vim.opt.rtp:prepend(lazypath)
+
+require("lazy").setup({
   'modulomedito/rookie_toys.nvim', -- Line break for dependencies
   dependencies = {
     'NeogitOrg/neogit', -- Git wrapper
@@ -57,7 +75,7 @@ Use lazy.nvim to install this plugin.
   config = function()
     require("rookie_toys").setup()
   end,
-},
+})
 ```
 
 ## In lua/secret.lua
